@@ -21,11 +21,13 @@ public class Registry {
         overlayCreator = new OverlayCreator();
     }
 
+
     public void start() {
         DEBUG.debug_print("Starting Registry server thread.");
         serverThread.start();
         handleCommands();
     }
+
 
     private void handleCommands() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -90,5 +92,15 @@ public class Registry {
         int port = Integer.parseInt(args[0]);
         Registry registry = new Registry(port);
         registry.start();
+    }
+
+    public void deregisterNode() {
+
+
+    }
+
+    public void registerNode(Node node) {
+        DEBUG.debug_print("Registering node: " + node);
+        registeredNodes.put(node.getHostname(), node);
     }
 }

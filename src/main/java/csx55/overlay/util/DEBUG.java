@@ -7,11 +7,6 @@ public class DEBUG {
 
     public static boolean DEBUG = false;
 
-    public enum DebugLevel {
-        INFO,
-        WARN,
-        ERROR
-    }
 
     public static void debug_print(String message) {
         if (DEBUG) {

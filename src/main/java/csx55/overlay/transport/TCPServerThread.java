@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
 public class TCPServerThread extends Thread {
 
     private int serverPort;
@@ -30,12 +31,18 @@ public class TCPServerThread extends Thread {
     public void run() {
         DEBUG.debug_print("Server thread started.");
         this.isRunning = true;
+
+        if(Thread.currentThread() != this) { // only instances of my thread can invoke this method
+            DEBUG.debug_print("Server thread not running on its own thread.");
+            throw new IllegalStateException("Server thread not running on its own thread.");
+        }
+
         try {
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
                 DEBUG.debug_print("Client connection accepted: " + clientSocket);
 
-                TCPReceiverThread clientThread = new TCPReceiverThread(clientSocket);
+                TCPReceiverThread clientThread = new TCPReceiverThread(clientSocket , registry);
                 clientThread.start();
             }
         } catch (IOException e) {
