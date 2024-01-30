@@ -57,7 +57,6 @@ public class TCPReceiverThread extends Thread {
             hostname = nodeInfo[0];
             ip = nodeInfo[1];
             port = Integer.parseInt(nodeInfo[2]);
-            node = new Node(hostname, ip, port);
             registry.registerNode(node);
 
         }

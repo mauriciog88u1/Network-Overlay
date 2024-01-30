@@ -3,13 +3,15 @@ package csx55.overlay.node;
 import csx55.overlay.transport.TCPServerThread;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.util.DEBUG;
+import csx55.overlay.wireformats.Event;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.HashMap;
 
-public class Registry {
+public class Registry implements Node{
     private final TCPServerThread serverThread;
     private final HashMap<String, Node> registeredNodes;
     private final OverlayCreator overlayCreator;
@@ -25,48 +27,12 @@ public class Registry {
     public void start() {
         DEBUG.debug_print("Starting Registry server thread.");
         serverThread.start();
-        handleCommands();
     }
 
-
-    private void handleCommands() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String command;
-        try {
-            while ((command = reader.readLine()) != null) {
-                DEBUG.debug_print("Received command: " + command);
-                switch (command.split(" ")[0]) {
-                    case "list-messaging-nodes":
-                        listMessagingNodes();
-                        break;
-                    case "list-weights":
-                        listWeights();
-                        break;
-                    case "setup-overlay":
-                        int numberOfConnections = Integer.parseInt(command.split(" ")[1]);
-                        setupOverlay(numberOfConnections);
-                        break;
-                    case "send-overlay-link-weights":
-                        sendOverlayLinkWeights();
-                        break;
-                    default:
-                        String usage = "Usage:\n" +
-                                       "list-messaging-nodes\n" +
-                                       "list-weights\n" +
-                                       "setup-overlay <number-of-connections>\n" +
-                                       "send-overlay-link-weights\n";
-                        System.out.println(usage);
-                }
-            }
-        } catch (IOException e) {
-            DEBUG.debug_print("Error handling command: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
     private void listMessagingNodes() {
-        for (Node node : registeredNodes.values()) {
-            System.out.println(node);
-        }
+       for (String node : registeredNodes.keySet()) {
+           System.out.println(node);
+       }
     }
 
     private void listWeights() {
@@ -99,8 +65,34 @@ public class Registry {
 
     }
 
-    public void registerNode(Node node) {
-        DEBUG.debug_print("Registering node: " + node);
-        registeredNodes.put(node.getHostname(), node);
+    public void registerNode(String hostname, String ip, int port) {
+        DEBUG.debug_print("Registering node: " + hostname + " " + ip + " " + port);
+        registeredNodes.put(hostname,null);
     }
+
+    @Override
+    public void onEvent(Event event) {
+        if (event.getType() == -1) {
+            DEBUG.debug_print("Error in event type.");
+        }
+
+
+    }
+
+    @Override
+    public String getHostname() {
+        return "";
+    }
+
+    @Override
+    public String getIp() {
+        return null;
+    }
+
+    @Override
+    public int getPort() {
+        return 0;
+    }
+
+
 }
