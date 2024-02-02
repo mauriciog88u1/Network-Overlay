@@ -1,22 +1,45 @@
 package csx55.overlay.wireformats;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 public class Register implements Event {
-    private final int messageType;
-    private final String ipAddress;
+    private final int messageType = Protocol.REGISTER_REQUEST;
+    private final InetAddress ipAddress;
     private final int port;
+//Register(InetAddress ipAddress, int port) is used for outgoing messages
+    public Register(InetAddress ipAddress, int port) {
+        this.ipAddress = ipAddress;
+        this.port = port;
+    }
+//    Register(byte[] data) throws IOException  is used for incoming messages
+   public Register(byte[] data) throws IOException {
+    DataInputStream din = new DataInputStream(new ByteArrayInputStream(data));
+    int messageType = din.readInt();
+    if (messageType != Protocol.REGISTER_REQUEST) {
+        throw new IllegalArgumentException("Incorrect message type for Register");
+    }
+    byte[] ipBytes = new byte[4];
+    din.readFully(ipBytes);
+    this.ipAddress = InetAddress.getByAddress(ipBytes);
+    this.port = din.readInt();
+}
 
-   public Register(byte[] data){
-       deserialize(data);
-   }
-   public Register(String ipAddress, int port) {
-       this.messageType = Protocol.REGISTER_REQUEST;
-       this.ipAddress = ipAddress;
-       this.port = port;
+    // Use static method for deserialization
+    public static Register deserialize(byte[] data) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        int messageType = buffer.getInt();
+        if (messageType != Protocol.REGISTER_REQUEST) {
+            throw new IllegalArgumentException("Incorrect message type for Register");
+        }
+
+        byte[] ipBytes = new byte[4]; // Assuming IPv4; adjust for IPv6 if needed
+        buffer.get(ipBytes);
+        InetAddress ipAddress = InetAddress.getByAddress(ipBytes);
+        int port = buffer.getInt();
+
+        return new Register(ipAddress, port);
     }
 
     public byte[] getBytes() throws IOException {
@@ -24,39 +47,17 @@ public class Register implements Event {
         DataOutputStream daOutputStream = new DataOutputStream(baOutputStream);
 
         daOutputStream.writeInt(messageType);
-        daOutputStream.writeInt(ipAddress.length());
-        daOutputStream.writeBytes(ipAddress);
+        byte[] ipBytes = ipAddress.getAddress();
+        daOutputStream.writeInt(ipBytes.length);
+        daOutputStream.write(ipBytes);
         daOutputStream.writeInt(port);
 
         daOutputStream.flush();
-        byte[] marshalledBytes = baOutputStream.toByteArray();
-        baOutputStream.close();
-        daOutputStream.close();
-
-        return marshalledBytes;
+        return baOutputStream.toByteArray();
     }
 
     @Override
     public int getType() {
         return messageType;
-    }
-
-
-    public Register deserialize(byte[] data) throws IOException {
-        ByteBuffer buffer = ByteBuffer.wrap(data);
-
-        int messageType = buffer.getInt();
-        if (messageType != Protocol.REGISTER_REQUEST) {
-            throw new IllegalArgumentException("Incorrect message type for Register");
-        }
-
-        int ipLength = buffer.getInt();
-        byte[] ipBytes = new byte[ipLength];
-        buffer.get(ipBytes);
-        String ipAddress = new String(ipBytes);
-
-        int port = buffer.getInt();
-
-        return new Register(ipAddress, port);
     }
 }

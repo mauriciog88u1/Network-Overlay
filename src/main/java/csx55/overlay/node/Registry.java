@@ -10,16 +10,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Registry implements Node{
     private final TCPServerThread serverThread;
-    private final HashMap<String, Node> registeredNodes;
+    private final ConcurrentHashMap<String, Node> registeredNodes;
     private final OverlayCreator overlayCreator;
 
     public Registry(int serverPort) {
         DEBUG.debug_print("Initializing Registry on port: " + serverPort);
         serverThread = new TCPServerThread(serverPort, this);
-        registeredNodes = new HashMap<>();
+        registeredNodes = new ConcurrentHashMap<>();
         overlayCreator = new OverlayCreator();
     }
 
@@ -60,12 +61,13 @@ public class Registry implements Node{
         registry.start();
     }
 
-    public void deregisterNode() {
+    public synchronized void deregisterNode() {
+
 
 
     }
 
-    public void registerNode(String hostname, String ip, int port) {
+    public synchronized void registerNode(String hostname, String ip, int port) {
         DEBUG.debug_print("Registering node: " + hostname + " " + ip + " " + port);
         registeredNodes.put(hostname,null);
     }

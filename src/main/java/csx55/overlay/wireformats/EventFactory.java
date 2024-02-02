@@ -1,52 +1,57 @@
 package csx55.overlay.wireformats;
 
-public class EventFactory  {
+import csx55.overlay.util.DEBUG;
+
+import java.io.IOException;
+
+public class EventFactory implements Protocol {
 //    singleton instance
 
-    private static EventFactory instance = null;
+    private static volatile EventFactory instance = null;
 
-    private EventFactory() {
-
-
-    }
-
+    private EventFactory() {}
     public static EventFactory getInstance() {
         if (instance == null) {
-            instance = new EventFactory();
+            synchronized (EventFactory.class) {
+                if (instance == null) {
+                    instance = new EventFactory();
+                }
+            }
         }
         return instance;
     }
 
-    public Event createEvent(byte[] data) {
+
+    public Event createEvent(byte[] data) throws IOException {
         Event e = null;
         int type = getType(data);
         switch (type) {
-            case Protocol.REGISTER_REQUEST:
+            case REGISTER_REQUEST:
                 e = new Register(data);
                 break;
-            case Protocol.REGISTER_RESPONSE:
-                e = new RegisterResponse(data);
+            case REGISTER_RESPONSE:
+                DEBUG.debug_print("Creating RegisterResponse");
                 break;
-            case Protocol.DEREGISTER_REQUEST:
-                e = new Deregister(data);
+            case DEREGISTER_REQUEST:
+                DEBUG.debug_print("Creating DeregisterRequest");
                 break;
-            case Protocol.MESSAGING_NODES_LIST:
-                e = new MessagingNodesList(data);
+            case MESSAGING_NODES_LIST:
+                DEBUG.debug_print("Creating MessagingNodesList");
                 break;
-            case Protocol.LINK_WEIGHTS:
-                e = new LinkWeights(data);
+            case LINK_WEIGHTS:
+                DEBUG.debug_print("Creating LinkWeights");
                 break;
-            case Protocol.TASK_INITIATE:
-                e = new TaskInitiate(data);
+            case TASK_INITIATE:
+                DEBUG.debug_print("Creating TaskInitiate");
                 break;
-            case Protocol.TASK_COMPLETE:
-                e = new TaskComplete(data);
+            case TASK_COMPLETE:
+                DEBUG.debug_print("Creating TaskComplete");
                 break;
-            case Protocol.PULL_TRAFFIC_SUMMARY:
-                e = new PullTrafficSummary(data);
+            case PULL_TRAFFIC_SUMMARY:
+                DEBUG.debug_print("Creating PullTrafficSummary");
                 break;
-            case Protocol.TRAFFIC_SUMMARY:
-                e = new TrafficSummary(data);
+            case TRAFFIC_SUMMARY:
+                DEBUG.debug_print("Creating TrafficSummary");
                 break;
 
             default:
