@@ -26,12 +26,50 @@ public class Registry implements Node{
 
 
     public void start() {
-        DEBUG.debug_print("Starting Registry server thread.");
+        DEBUG.debug_print("Starting Registry server thread. on hostname: " + getHostname() + " ip: " + getIp() + " port: " + getPort());
         serverThread.start();
+        listenForCommands();
+    }
+
+    private void listenForCommands() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        while (true) {
+            try {
+                String command = reader.readLine();
+                if (command != null) {
+                    processCommand(command);
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading command: " + e.getMessage());
+            }
+        }
+    }
+
+    private void processCommand(String command) {
+        String[] tokens = command.split(" ");
+        DEBUG.debug_print("Processing command: " + command);
+        DEBUG.debug_print("Tokens: " + tokens[0]);
+        switch (tokens[0]) {
+            case "list-messaging-nodes":
+                listMessagingNodes();
+                break;
+            case "list-weights":
+                listWeights();
+                break;
+            case "setup-overlay":
+                setupOverlay(Integer.parseInt(tokens[1]));
+                break;
+            case "send-overlay-link-weights":
+                sendOverlayLinkWeights();
+                break;
+            default:
+                System.out.println("Error: unknown command");
+        }
     }
 
     private void listMessagingNodes() {
        for (String node : registeredNodes.keySet()) {
+           DEBUG.debug_print("Node: " + node);
            System.out.println(node);
        }
     }
@@ -83,7 +121,7 @@ public class Registry implements Node{
 
     @Override
     public String getHostname() {
-        return "";
+       return  registeredNodes.keySet().toString();
     }
 
     @Override

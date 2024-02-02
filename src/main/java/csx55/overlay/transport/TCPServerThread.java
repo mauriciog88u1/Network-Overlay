@@ -20,7 +20,7 @@ public class TCPServerThread extends Thread {
         this.isRunning = false;
         try {
             this.serverSocket = new ServerSocket(serverPort);
-            DEBUG.debug_print("Server socket created on port: " + serverPort + " ip: " + serverSocket.getInetAddress());
+            DEBUG.debug_print("Server socket created on hostname: " + serverSocket.getInetAddress().getHostName() + " port: " + serverSocket.getLocalPort());
         } catch (IOException e) {
             DEBUG.debug_print("Error creating server socket: " + e.getMessage());
             System.out.println("Error creating server socket: " + e.getMessage());

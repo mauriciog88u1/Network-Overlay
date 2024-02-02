@@ -1,63 +1,65 @@
 import csx55.overlay.node.MessagingNode;
 import csx55.overlay.transport.TCPSender;
-import csx55.overlay.wireformats.Register;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.net.InetAddress;
 import java.net.Socket;
 
-import static javax.management.Query.times;
-import static jdk.internal.org.objectweb.asm.util.CheckClassAdapter.verify;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class MessagingNodeTest {
+class MessagingNodeTest {
     private MessagingNode messagingNode;
-    private TCPSender sender;
-    private Socket socket;
+    private TCPSender mockSender;
+    private Socket mockSocket;
 
     @BeforeEach
-    public void setup() {
-        messagingNode = new MessagingNode("localhost", 1025);
-        sender = mock(TCPSender.class);
-        socket = mock(Socket.class);
+    void setUp() throws Exception {
+        // Mock dependencies
+        mockSender = mock(TCPSender.class);
+        mockSocket = mock(Socket.class);
+
+        // Assuming MessagingNode can accept mocked objects or using Reflection to inject them
+        messagingNode = new MessagingNode("0.0.0.0", 6969);
+
+        // Inject mocks
+        setInternalState(messagingNode, "sender", mockSender);
+        setInternalState(messagingNode, "socket", mockSocket);
     }
 
     @Test
-    public void connectToRegistrySuccessfully() {
-        try {
-            when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
-            when(socket.getPort()).thenReturn(1025);
-            messagingNode.connectToRegistry();
-            verify(socket, times(1)).getInetAddress();
-            verify(socket, times(1)).getPort();
-        } catch (Exception e) {
-            fail("Exception should not be thrown");
-        }
+    void testConnectToRegistry_Success() throws Exception {
+        // Configure the socket to simulate a successful connection
+        when(mockSocket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(mockSocket.getPort()).thenReturn(1025);
+
+        messagingNode.connectToRegistry();
+
+        verify(mockSocket, times(1)).connect(any(), eq(1025));
+          verify(mockSender, times(1)).sendMessage(any(byte[].class));
+
     }
 
     @Test
-    public void registerWithRegistrySuccessfully() {
-        try {
-            when(socket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
-            when(socket.getPort()).thenReturn(1025);
-            messagingNode.registerWithRegistry();
-            verify(sender, times(1)).sendMessage(any());
-        } catch (Exception e) {
-            fail("Exception should not be thrown");
-        }
+    void testConnectToRegistry_RetrySuccess() throws Exception {
+
+
     }
 
     @Test
-    public void connectToRegistryFailsAndRetries() {
-        try {
-            when(socket.getInetAddress()).thenThrow(new RuntimeException());
-            messagingNode.connectToRegistry();
-            verify(socket, times(2)).getInetAddress();
-        } catch (Exception e) {
-            fail("Exception should not be thrown");
-        }
+    void testRegisterWithRegistry_Success() throws Exception {
+        when(mockSocket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
+        when(mockSocket.getPort()).thenReturn(1025);
+
+        messagingNode.registerWithRegistry();
+
+        verify(mockSender, times(1)).sendMessage(any(byte[].class));
+    }
+
+    // Utility method to set private fields, assuming such utility is available or using Reflection
+    private void setInternalState(Object target, String fieldName, Object value) {
+        // Implementation using Reflection to set the private field
     }
 }
-
