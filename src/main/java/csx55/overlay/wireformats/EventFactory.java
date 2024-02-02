@@ -5,7 +5,6 @@ import csx55.overlay.util.DEBUG;
 import java.io.IOException;
 
 public class EventFactory implements Protocol {
-//    singleton instance
 
     private static volatile EventFactory instance = null;
 
@@ -22,7 +21,8 @@ public class EventFactory implements Protocol {
     }
 
 
-    public Event createEvent(byte[] data) throws IOException {
+    public  static Event createEvent(byte[] data) throws IOException {
+        DEBUG.debug_print("Creating event from data: " + new String(data));
         Event e = null;
         int type = getType(data);
         switch (type) {
@@ -61,7 +61,8 @@ public class EventFactory implements Protocol {
         return e;
     }
 
-    private int getType(byte[] data) {
+    private static int getType(byte[] data) {
+        DEBUG.debug_print("Getting type from data: " + new String(data));
         int type = -1;
         try {
             type = data[0];

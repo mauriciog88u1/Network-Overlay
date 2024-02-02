@@ -9,6 +9,7 @@ import java.net.Socket;
 import csx55.overlay.node.Node;
 
 import static csx55.overlay.util.DEBUG.debug_print;
+import static csx55.overlay.wireformats.EventFactory.createEvent;
 
 
 public class TCPReceiverThread extends Thread {
@@ -51,13 +52,7 @@ public class TCPReceiverThread extends Thread {
         debug_print("Processed message: " + input);
 
         try {
-            String[] nodeInfo = input.split(" ");
-            String hostname, ip;
-            int port;
-            hostname = nodeInfo[0];
-            ip = nodeInfo[1];
-            port = Integer.parseInt(nodeInfo[2]);
-            registry.registerNode(hostname, ip, port);
+            createEvent(input.getBytes());
 
         }
         catch (Exception e) {
