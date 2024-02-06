@@ -3,12 +3,19 @@ package csx55.overlay.wireformats;
 import csx55.overlay.util.DEBUG;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class EventFactory implements Protocol {
 
     private static volatile EventFactory instance = null;
 
     private EventFactory() {}
+
+    /**
+     * @return the instance of the EventFactory class
+     * Purpose of this method is to create a singleton instance of the EventFactory class
+     * This is to ensure that only one instance of the EventFactory class is created
+     */
     public static EventFactory getInstance() {
         if (instance == null) {
             synchronized (EventFactory.class) {
@@ -27,7 +34,7 @@ public class EventFactory implements Protocol {
         int type = getType(data);
         switch (type) {
             case REGISTER_REQUEST:
-                e = new Register(data);
+                e =  new Register(data);
                 break;
             case REGISTER_RESPONSE:
                 DEBUG.debug_print("Creating RegisterResponse");
@@ -62,16 +69,16 @@ public class EventFactory implements Protocol {
     }
 
     private static int getType(byte[] data) {
-        DEBUG.debug_print("Getting type from data: " + new String(data));
         int type = -1;
         try {
-            type = data[0];
+            type = ByteBuffer.wrap(data).getInt();
+            DEBUG.debug_print("Event type: " + type);
         } catch (Exception e) {
-            System.out.println("Error: EventFactory: getType: " + e.getMessage());
-            System.exit(1);
+            DEBUG.debug_print("Error: EventFactory: getType: " + e.getMessage());
         }
         return type;
     }
+
 
 
 

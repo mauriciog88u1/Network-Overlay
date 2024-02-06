@@ -12,9 +12,8 @@ import static csx55.overlay.wireformats.EventFactory.createEvent;
 public class TCPReceiverThread extends Thread {
 
     private Socket clientSocket;
-    private Node node; // Use Node interface
+    private Node node;
 
-    // Adjusted constructor to accept Node interface
     public TCPReceiverThread(Socket clientSocket, Node node) {
         this.clientSocket = clientSocket;
         this.node = node;

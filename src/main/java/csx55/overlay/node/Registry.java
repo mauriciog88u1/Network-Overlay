@@ -5,6 +5,7 @@ import csx55.overlay.transport.TCPServerThread;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.util.DEBUG;
 import csx55.overlay.wireformats.Event;
+import csx55.overlay.wireformats.Register;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -141,9 +142,16 @@ public class Registry implements Node {
 
     @Override
     public void onEvent(Event event) {
-        // Process event received by the registry
-        System.out.println("Event received: " + event); // Placeholder for actual event processing
+        debug_print("Registry received an event of type: " + event.getType());
+        if (event instanceof Register) {
+            Register registerEvent = (Register) event;
+            String ipAddress = registerEvent.getIpAddress();
+            int port = registerEvent.getPort();
+            registerNode(ipAddress,ipAddress,port); // Assuming registerNode accepts IP and port
+        }
     }
+
+
 
     @Override
     public String getHostname() {
