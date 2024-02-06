@@ -1,23 +1,20 @@
 package csx55.overlay.transport;
 
-import csx55.overlay.node.MessagingNode;
-import csx55.overlay.node.Registry;
+import csx55.overlay.node.Node;
 import csx55.overlay.util.DEBUG;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
 public class TCPServerThread extends Thread {
-
     private int serverPort;
-    private Registry registry;
+    private Node node; // Use Node interface instead of Registry
     private ServerSocket serverSocket;
     private boolean isRunning;
 
-    public TCPServerThread(int serverPort, Registry registry) {
+    public TCPServerThread(int serverPort, Node node) {
         this.serverPort = serverPort;
-        this.registry = registry;
+        this.node = node; // Accept any Node implementation
         this.isRunning = false;
         try {
             this.serverSocket = new ServerSocket(serverPort);
@@ -28,25 +25,16 @@ public class TCPServerThread extends Thread {
         }
     }
 
-
-
     @Override
     public void run() {
         DEBUG.debug_print("Server thread started.");
         this.isRunning = true;
 
-        if(Thread.currentThread() != this) { // only instances of my thread can invoke this method
-            DEBUG.debug_print("Server thread not running on its own thread.");
-            throw new IllegalStateException("Server thread not running on its own thread.");
-        }
-
         try {
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
                 DEBUG.debug_print("Client connection accepted: " + clientSocket);
-
-                TCPReceiverThread clientThread = new TCPReceiverThread(clientSocket , registry);
-                clientThread.start();
+                node.handleNewConnection(clientSocket);
             }
         } catch (IOException e) {
             if (isRunning) {
