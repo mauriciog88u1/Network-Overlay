@@ -29,6 +29,7 @@ public class MessagingNode {
         }
     }
 
+
     public static void main(String[] args) {
         System.out.println("MessagingNode starting");
         if (args.length != 2 && args.length != 3) {
