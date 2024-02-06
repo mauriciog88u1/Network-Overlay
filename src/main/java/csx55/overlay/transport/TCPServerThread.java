@@ -1,5 +1,6 @@
 package csx55.overlay.transport;
 
+import csx55.overlay.node.MessagingNode;
 import csx55.overlay.node.Registry;
 import csx55.overlay.util.DEBUG;
 import java.io.IOException;
@@ -26,6 +27,8 @@ public class TCPServerThread extends Thread {
             System.out.println("Error creating server socket: " + e.getMessage());
         }
     }
+
+
 
     @Override
     public void run() {
