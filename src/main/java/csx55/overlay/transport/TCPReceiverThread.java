@@ -31,7 +31,7 @@ public class TCPReceiverThread extends Thread {
                 if(dataLength > 0) {
                     byte[] data = new byte[dataLength];
                     din.readFully(data, 0, dataLength);
-                    debug_print("Received " + dataLength + " bytes from " + clientSocket);
+                    debug_print("Received " + dataLength + " bytes from " + clientSocket + ": " + bytesToHex(data));
                     node.onEvent(createEvent(data));
                 }
             }
@@ -52,4 +52,16 @@ public class TCPReceiverThread extends Thread {
             debug_print("Error closing socket: " + e.getMessage());
         }
     }
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xFF & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex).append(' ');
+        }
+        return hexString.toString();
+    }
+
 }
