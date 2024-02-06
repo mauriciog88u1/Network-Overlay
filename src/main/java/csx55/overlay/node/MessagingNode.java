@@ -47,6 +47,7 @@ public class MessagingNode {
     }
 
     public void registerWithRegistry() {
+
         try {
             InetAddress localHost = InetAddress.getLocalHost();
             Register register = new Register(localHost, serverSocket.getLocalPort());
