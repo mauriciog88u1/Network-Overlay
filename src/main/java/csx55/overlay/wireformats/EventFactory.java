@@ -32,6 +32,7 @@ public class EventFactory implements Protocol {
         DEBUG.debug_print("Creating event from data: " + new String(data));
         Event e = null;
         int type = getType(data);
+        DEBUG.debug_print("Event type: " + type);
         switch (type) {
             case REGISTER_REQUEST:
                 e =  new Register(data);
@@ -69,14 +70,8 @@ public class EventFactory implements Protocol {
     }
 
     private static int getType(byte[] data) {
-        int type = -1;
-        try {
-            type = ByteBuffer.wrap(data).getInt();
-            DEBUG.debug_print("Event type: " + type);
-        } catch (Exception e) {
-            DEBUG.debug_print("Error: EventFactory: getType: " + e.getMessage());
-        }
-        return type;
+        return ((data[0] & 0xFF) << 24) | ((data[1] & 0xFF) << 16) |
+                ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
     }
 
 

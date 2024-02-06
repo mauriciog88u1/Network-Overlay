@@ -27,14 +27,12 @@ public class TCPReceiverThread extends Thread {
         debug_print("Listening for messages on ip: " + clientSocket.getInetAddress() + " port: " + clientSocket.getPort() + "");
         try {
             InputStream inputStream = clientSocket.getInputStream();
-            byte[] buffer = new byte[1024]; // Adjust buffer size as needed
+            byte[] buffer = new byte[1024];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 byte[] data = new byte[bytesRead];
                 System.arraycopy(buffer, 0, data, 0, bytesRead);
                 debug_print("Received " + bytesRead + " bytes from " + clientSocket + ": " + bytesToHex(data));
-                // Assuming you still want to process the received data as an event
-                // This might need adjustment based on how you're actually using the received data
                 node.onEvent(createEvent(data));
             }
 
