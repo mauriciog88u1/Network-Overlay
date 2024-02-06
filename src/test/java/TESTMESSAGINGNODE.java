@@ -35,7 +35,7 @@ class MessagingNodeTest {
         when(mockSocket.getInetAddress()).thenReturn(InetAddress.getLocalHost());
         when(mockSocket.getPort()).thenReturn(1025);
 
-        messagingNode.connectToRegistry();
+        messagingNode.registerWithRegistry();
 
         verify(mockSocket, times(1)).connect(any(), eq(1025));
           verify(mockSender, times(1)).sendMessage(any(byte[].class));
