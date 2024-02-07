@@ -1,35 +1,34 @@
 package csx55.overlay.transport;
 
-import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Arrays;
 
 public class TCPSender {
 
     private Socket clientSocket;
-    private BufferedWriter out;
-
-
+    private DataOutputStream out;
 
     public TCPSender(Socket clientSocket) {
         this.clientSocket = clientSocket;
         try {
-            this.out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            this.out = new DataOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             System.out.println("Error initializing output stream: " + e.getMessage());
         }
     }
 
     public void sendMessage(byte[] message) {
-    try {
-        out.write(Arrays.toString(message));
-        out.flush();
-    } catch (IOException e) {
-        System.out.println("Error sending message: " + e.getMessage());
+        try {
+            out.writeInt(message.length);
+            out.write(message);
+            out.flush();
+        } catch (IOException e) {
+            System.out.println("Error sending message: " + e.getMessage());
+        }
     }
-}
+
     public void closeConnection() {
         try {
             if (out != null) {
