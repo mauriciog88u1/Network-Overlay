@@ -1,8 +1,10 @@
 
+import csx55.overlay.transport.TCPSender;
 import csx55.overlay.wireformats.Register;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +20,7 @@ public class TestRegister {
         Register originalRegister = new Register(ipAddress, port);
 
         byte[] serializedData = originalRegister.getBytes();
+
         System.out.println("Serialized data: " + Arrays.toString(serializedData));
 
         Register deserializedRegister = new Register(serializedData);

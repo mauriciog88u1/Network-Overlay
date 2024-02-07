@@ -2,6 +2,8 @@ package csx55.overlay.wireformats;
 
 import csx55.overlay.util.DEBUG;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -31,7 +33,8 @@ public class EventFactory implements Protocol {
     public  static Event createEvent(byte[] data) throws IOException {
         DEBUG.debug_print("Creating event from data: " + new String(data));
         Event e = null;
-        int type = getType(data);
+        DataInputStream din = new DataInputStream(new ByteArrayInputStream(data));
+        int type = din.readInt();
         DEBUG.debug_print("Event type: " + type);
         switch (type) {
             case REGISTER_REQUEST:
@@ -68,13 +71,6 @@ public class EventFactory implements Protocol {
         }
         return e;
     }
-
-    private static int getType(byte[] data) {
-        return ((data[0] & 0xFF) << 24) | ((data[1] & 0xFF) << 16) |
-                ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
-    }
-
-
 
 
 

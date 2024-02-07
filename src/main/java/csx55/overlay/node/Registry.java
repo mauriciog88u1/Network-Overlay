@@ -147,7 +147,7 @@ public class Registry implements Node {
             Register registerEvent = (Register) event;
             String ipAddress = registerEvent.getIpAddress();
             int port = registerEvent.getPort();
-            registerNode(ipAddress,ipAddress,port); // Assuming registerNode accepts IP and port
+            registerNode(ipAddress,ipAddress,port);
         }
     }
 

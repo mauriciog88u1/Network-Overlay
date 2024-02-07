@@ -1,5 +1,7 @@
 package csx55.overlay.transport;
 
+import csx55.overlay.util.DEBUG;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,6 +25,7 @@ public class TCPSender {
         try {
             out.writeInt(message.length);
             out.write(message);
+            DEBUG.debug_print("Sent message: " + bytesToHex(message));
             out.flush();
         } catch (IOException e) {
             System.out.println("Error sending message: " + e.getMessage());
@@ -41,4 +44,13 @@ public class TCPSender {
             System.out.println("Error closing connection: " + e.getMessage());
         }
     }
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.toString();
+    }
+
 }
+
