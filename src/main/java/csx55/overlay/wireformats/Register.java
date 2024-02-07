@@ -27,25 +27,36 @@ public class Register implements Event {
     }
 
     public byte[] getBytes() throws IOException {
+        if (messageType != Protocol.REGISTER_REQUEST || ipAddress == null) {
+            throw new IllegalArgumentException("Incorrect message type for Register or ipAddress is null");
+        }
+
         ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
-        DataOutputStream daOutputStream = new DataOutputStream(baOutputStream);
+        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
-        daOutputStream.writeInt(messageType);
-        byte[] ipBytes = ipAddress.getBytes();
-        daOutputStream.writeInt(ipBytes.length);
-        daOutputStream.write(ipBytes);
-        daOutputStream.writeInt(port);
+        dout.writeInt(messageType);
 
-        daOutputStream.flush();
-        return baOutputStream.toByteArray();
+        byte[] ipAddressBytes = ipAddress.getBytes();
+        dout.writeInt(ipAddressBytes.length);
+        dout.write(ipAddressBytes);
+
+        dout.writeInt(port);
+
+        dout.flush();
+        byte[] marshalledBytes = baOutputStream.toByteArray();
+
+        dout.close();
+        baOutputStream.close();
+
+        return marshalledBytes;
     }
+
 
     @Override
     public int getType() {
         return messageType;
     }
 
-    // Additional getter methods for ipAddress and port, if needed
     public String getIpAddress() {
         return ipAddress;
     }
