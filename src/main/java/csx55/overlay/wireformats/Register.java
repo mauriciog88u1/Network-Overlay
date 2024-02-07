@@ -1,14 +1,17 @@
 package csx55.overlay.wireformats;
 
 import java.io.*;
+import java.net.InetAddress;
 
 public class Register implements Event {
     private final int messageType = Protocol.REGISTER_REQUEST;
 
     private final String ipAddress;
+    private final String hostname;
     private final int port;
 
-    public Register(String ipAddress, int port) {
+    public Register(String hostname,String ipAddress, int port) {
+        this.hostname = hostname;
         this.ipAddress = ipAddress;
         this.port = port;
     }
@@ -23,6 +26,8 @@ public class Register implements Event {
         byte[] ipBytes = new byte[ipLength];
         din.readFully(ipBytes);
         this.ipAddress = new String(ipBytes);
+        InetAddress addr = InetAddress.getByName(ipAddress);
+        this.hostname = addr.getHostName();
         this.port = din.readInt();
     }
 
@@ -64,4 +69,8 @@ public class Register implements Event {
     public int getPort() {
         return port;
     }
+    public String getHostname(){
+        return hostname;
+    }
+   
 }

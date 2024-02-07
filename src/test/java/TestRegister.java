@@ -17,7 +17,7 @@ public class TestRegister {
         // Original Register object
         String ipAddress = "127.0.0.1";
         int port = 8080;
-        Register originalRegister = new Register(ipAddress, port);
+        Register originalRegister = new Register("local",ipAddress, port);
 
         byte[] serializedData = originalRegister.getBytes();
 

@@ -146,10 +146,13 @@ public class Registry implements Node {
         if (event instanceof Register) {
             Register registerEvent = (Register) event;
             String ipAddress = registerEvent.getIpAddress();
+            String hostname = registerEvent.getHostname();
             int port = registerEvent.getPort();
-            registerNode(ipAddress,ipAddress,port);
-        }
+            registerNode(hostname,ipAddress,port);
+        
+        
     }
+}
 
 
 

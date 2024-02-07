@@ -86,7 +86,8 @@ public class MessagingNode implements Node {
 
     public void registerWithRegistry() throws IOException {
         InetAddress localHost = InetAddress.getLocalHost();
-        Register register = new Register(localHost.getHostAddress(), serverSocket.getLocalPort());
+        debug_print(getHostname());
+        Register register = new Register(localHost.getHostName(),localHost.getHostAddress(), serverSocket.getLocalPort());
         debug_print("Sending "+ Arrays.toString(register.getBytes()) + " to registry.");
         sender.sendMessage(register.getBytes());
         debug_print("Registration message sent to registry.");
