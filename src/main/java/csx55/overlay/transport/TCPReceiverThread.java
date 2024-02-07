@@ -3,7 +3,6 @@ package csx55.overlay.transport;
 import csx55.overlay.node.Node;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 
 import static csx55.overlay.util.DEBUG.DEBUG;
@@ -26,16 +25,16 @@ public class TCPReceiverThread extends Thread {
         debug_print("TCPReceiverThread started for client: " + clientSocket);
         debug_print("Listening for messages on ip: " + clientSocket.getInetAddress() + " port: " + clientSocket.getPort() + "");
         try {
-            InputStream inputStream = clientSocket.getInputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byte[] data = new byte[bytesRead];
-                System.arraycopy(buffer, 0, data, 0, bytesRead);
-                debug_print("Received " + bytesRead + " bytes from " + clientSocket + ": " + bytesToHex(data));
-                node.onEvent(createEvent(data));
+            DataInputStream din = new DataInputStream(clientSocket.getInputStream());
+            while (!clientSocket.isClosed()) {
+                int dataLength = din.readInt();
+                if(dataLength > 0) {
+                    byte[] data = new byte[dataLength];
+                    din.readFully(data, 0, dataLength);
+                    debug_print("Received " + dataLength + " bytes from " + clientSocket);
+                    node.onEvent(createEvent(data));
+                }
             }
-
         } catch (IOException e) {
             debug_print("Error in TCP Receiver: " + e.getMessage());
         } finally {
@@ -53,16 +52,4 @@ public class TCPReceiverThread extends Thread {
             debug_print("Error closing socket: " + e.getMessage());
         }
     }
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xFF & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex).append(' ');
-        }
-        return hexString.toString();
-    }
-
 }
