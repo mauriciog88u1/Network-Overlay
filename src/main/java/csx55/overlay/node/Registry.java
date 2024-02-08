@@ -167,11 +167,7 @@ public class Registry implements Node {
             String ipAddress = registerEvent.getIpAddress();
             int port = registerEvent.getPort();
             String hostname = registerEvent.getHostname();
-            try {
-                registerNode(hostname, ipAddress, port);
-            } catch (IOException e) {
-                debug_print("Error registering node: " + e.getMessage());
-            }
+            registerNode(hostname, ipAddress, port);
         }
         else if (event instanceof Deregister) {
             Deregister deregEvent = (Deregister) event;
