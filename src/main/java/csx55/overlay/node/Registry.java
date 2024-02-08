@@ -5,9 +5,7 @@ import csx55.overlay.transport.TCPServerThread;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.util.DEBUG;
-import csx55.overlay.wireformats.Event;
-import csx55.overlay.wireformats.Register;
-import csx55.overlay.wireformats.RegisterResponse;
+import csx55.overlay.wireformats.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -134,20 +132,57 @@ public class Registry implements Node {
         }
     }
 
-    public synchronized void deregisterNode(String hostname, int port) {
+    public synchronized void deregisterNode(String hostname, String ip, int port) {
         String key = hostname + ":" + port;
-        if (registeredNodes.remove(key) != null) {
+        if (registeredNodes.containsKey(key)) {
+            registeredNodes.remove(key);
             debug_print("Node deregistered: " + key);
+            sendDeregisterResponse(key, (byte)1, "Node successfully deregistered.");
         } else {
-            debug_print("Attempt to deregister non-existent node: " + key);
+            debug_print("Node not found for deregistration: " + key);
+            sendDeregisterResponse(key, (byte)0, "Node not found for deregistration.");
+        }
+    }
+
+    private void sendDeregisterResponse(String key, byte status, String message) {
+        NodeWrapper node = registeredNodes.get(key);
+        if (node != null) {
+            try {
+                TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
+                DeregisterResponse response = new DeregisterResponse(status, message);
+                sender.sendMessage(response.getBytes());
+                sender.closeConnection();
+            } catch (IOException e) {
+                debug_print("Error sending deregister response: " + e.getMessage());
+            }
         }
     }
 
     @Override
     public void onEvent(Event event) {
-        debug_print("Registry received event: " + event.getType());
+        debug_print("Registry received event of type: " + event.getType());
+        // Handling Register events
         if (event instanceof Register) {
-            handleRegisterEvent((Register) event);
+            Register registerEvent = (Register) event;
+            String ipAddress = registerEvent.getIpAddress();
+            int port = registerEvent.getPort();
+            String hostname = registerEvent.getHostname();
+            try {
+                registerNode(hostname, ipAddress, port);
+            } catch (IOException e) {
+                debug_print("Error registering node: " + e.getMessage());
+            }
+        }
+        else if (event instanceof Deregister) {
+            Deregister deregEvent = (Deregister) event;
+            String ipAddress = deregEvent.getIpAddress();
+            int port = deregEvent.getPort();
+            String hostname = deregEvent.getHostname();
+            deregisterNode(hostname, ipAddress, port);
+        }
+        else {
+            System.err.println("Unknown event type: " + event.getType());
+            debug_print("Unknown event type: " + event.getType());
         }
     }
 

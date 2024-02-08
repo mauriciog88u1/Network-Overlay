@@ -40,7 +40,7 @@ public class EventFactory implements Protocol {
                 e = new RegisterResponse(data);
                 break;
             case DEREGISTER_REQUEST:
-                DEBUG.debug_print("Creating DeregisterRequest");
+                e = new Deregister(data);
                 break;
             case MESSAGING_NODES_LIST:
                 DEBUG.debug_print("Creating MessagingNodesList");
