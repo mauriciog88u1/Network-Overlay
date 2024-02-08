@@ -71,6 +71,7 @@ public class Registry implements Node {
     private void processCommand(String command) {
         String[] tokens = command.split("\\s+");
         debug_print("Processing command: " + command);
+        int numConnections = registeredNodes.size() - 1;
         switch (tokens[0]) {
             case "list-messaging-nodes":
                 listMessagingNodes();
@@ -79,7 +80,6 @@ public class Registry implements Node {
                 listWeights();
                 break;
             case "setup-overlay":
-                int numConnections = Integer.parseInt(tokens[1]);
                 setupOverlay(numConnections);
                 break;
             case "send-overlay-link-weights":
