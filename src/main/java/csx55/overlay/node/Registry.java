@@ -79,6 +79,10 @@ public class Registry implements Node {
                 listWeights();
                 break;
             case "setup-overlay":
+                if (tokens.length != 2) {
+                    System.out.println("Usage: setup-overlay <number-of-connections>");
+                    return;
+                }
                 setupOverlay(Integer.parseInt(tokens[1]));
                 break;
             case "send-overlay-link-weights":
@@ -96,6 +100,7 @@ public class Registry implements Node {
     }
 
     private void listWeights() {
+        overlayCreator.getOverlayMap().forEach((node, connections) -> System.out.println(node + " -> " + connections));
 
     }
 
@@ -130,6 +135,7 @@ public class Registry implements Node {
     }
 
     private void sendOverlayLinkWeights() {
+        DEBUG.debug_print("Inside sendOverlayLinkWeights...");
         LinkWeights linkWeights = new LinkWeights();
         ConcurrentHashMap<String, List<String>> overlay = overlayCreator.getOverlayMap();
         linkWeights.generateLinkWeights(overlay);
