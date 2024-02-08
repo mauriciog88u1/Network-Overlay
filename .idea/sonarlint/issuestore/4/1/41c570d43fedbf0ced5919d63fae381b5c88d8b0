@@ -1,0 +1,14 @@
+
+s
+java:S1104"QMake DEBUG a static final constant or non-public and provide accessors if needed.(îéÒ¡ÿÿÿÿÿ8€Ù²ÃÓ1
+M
+java:S1444"+Make this "public static DEBUG" field final(îéÒ¡ÿÿÿÿÿ8Ù²ÃÓ1
+6
+java:S1700"Rename field "DEBUG"(îéÒ¡ÿÿÿÿÿ8‚Ù²ÃÓ1
+{	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(üš½ıùÿÿÿÿ8‚Ù²ÃÓ1
+r
+java:S3008"PRename this field "DEBUG" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(îéÒ¡ÿÿÿÿÿ8ŠÙ²ÃÓ1
+\
+java:S1118":Add a private constructor to hide the implicit public one.(±Ì øÿÿÿÿ8É«Ù¹Õ1
+o	java:S100"NRename this method name to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(£ìàûÿÿÿÿ8–Ù²ÃÓ1
+G	java:S106"+Replace this use of System.out by a logger.(¯ÌéË8˜Ù²ÃÓ1

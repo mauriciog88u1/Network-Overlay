@@ -1,0 +1,11 @@
+
+{	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ï±Ø©ùÿÿÿÿ8ëµ•ÕØ1
+H	java:S106“"+Replace this use of System.out by a logger.(•¶ö8¶•ÕØ1
+^
+java:S1854¡"@Remove this useless assignment to local variable "shortestPath".(–Ë©Ş8¶•ÕØ1
+O
+java:S1481¡"1Remove this unused "shortestPath" local variable.(–Ë©Ş8‚¶•ÕØ1
+H	java:S106§"+Replace this use of System.out by a logger.(šŠ«¦8‚¶•ÕØ1
+H	java:S106°"+Replace this use of System.err by a logger.(áƒ8ƒ¶•ÕØ1
+Q
+java:S1144ˆ"3Remove this unused private "processCommand" method.(ÃÈ·‡8ƒ¶•ÕØ1

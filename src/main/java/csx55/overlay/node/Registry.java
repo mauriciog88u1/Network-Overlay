@@ -13,8 +13,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -79,6 +78,10 @@ public class Registry implements Node {
                 listWeights();
                 break;
             case "setup-overlay":
+                if (tokens.length != 2) {
+                    System.out.println("Usage: setup-overlay <number-of-connections>");
+                    return;
+                }
                 setupOverlay(Integer.parseInt(tokens[1]));
                 break;
             case "send-overlay-link-weights":
@@ -96,7 +99,9 @@ public class Registry implements Node {
     }
 
     private void listWeights() {
-
+        overlayCreator.getOverlayMap().forEach((nodeKey, connections) -> {
+            System.out.println(nodeKey + " -> " + connections);
+        });
     }
 
 
@@ -130,6 +135,7 @@ public class Registry implements Node {
     }
 
     private void sendOverlayLinkWeights() {
+        DEBUG.debug_print("In sendOverlayLinkWeights");
         LinkWeights linkWeights = new LinkWeights();
         ConcurrentHashMap<String, List<String>> overlay = overlayCreator.getOverlayMap();
         linkWeights.generateLinkWeights(overlay);
