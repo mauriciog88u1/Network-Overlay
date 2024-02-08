@@ -125,6 +125,7 @@ public class Registry implements Node {
         if (node != null) {
             try {
                 TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
+                DEBUG.debug_print("Trying to send message to " + node.getHostname() + " at " + node.getIp() + ":" + node.getPort());
                 sender.sendMessage(response.getBytes());
                 sender.closeConnection();
             } catch (IOException e) {
@@ -167,6 +168,11 @@ public class Registry implements Node {
     @Override
     public int getPort() {
         return serverPort;
+    }
+
+    @Override
+    public void handleNewConnection(Socket clientSocket) {
+        new TCPReceiverThread(clientSocket, this).start();
     }
 
     public static void main(String[] args) {
