@@ -5,6 +5,7 @@ import csx55.overlay.transport.TCPSender;
 import csx55.overlay.util.DEBUG;
 import csx55.overlay.wireformats.Event;
 import csx55.overlay.wireformats.Register;
+import csx55.overlay.wireformats.RegisterResponse;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import static csx55.overlay.util.DEBUG.debug_print;
 
 public class MessagingNode implements Node {
+
     private TCPSender sender;
     private Socket registrySocket;
     private ServerSocket serverSocket;
@@ -30,15 +32,16 @@ public class MessagingNode implements Node {
             debug_print("MessagingNode listening on port: " + serverSocket.getLocalPort());
 
             listenForConnections();
-            registerWithRegistry();
+            regstriationToRegistry();
         } catch (IOException e) {
             debug_print("Error initializing MessagingNode: " + e.getMessage());
+            System.err.println("Error initializing MessagingNode: " + e.getMessage());
         }
     }
 
     private void listenForConnections() {
 
-        System.out.println("Listening for connections on " +getHostname()+ ":" + getPort());
+        System.out.printf("Listening for connections on %s:%d%n", getHostname(), getPort());
         new Thread(() -> {
             try {
                 while (!serverSocket.isClosed()) {
@@ -54,8 +57,15 @@ public class MessagingNode implements Node {
 
     @Override
     public void onEvent(Event event) {
-        debug_print("Event received: processing...");
-        debug_print(event.toString());
+        if (event instanceof RegisterResponse) {
+            RegisterResponse response = (RegisterResponse) event;
+            if (response.getStatusCode() == 1) {
+                System.out.println(response.getAdditionalInfo());
+                debug_print("Registration successful: " + response.getAdditionalInfo());
+            } else {
+                debug_print("Registration failed: " + response.getAdditionalInfo());
+            }
+        }
     }
 
     @Override
@@ -84,7 +94,7 @@ public class MessagingNode implements Node {
         new TCPReceiverThread(clientSocket, this).start();
     }
 
-    public void registerWithRegistry() throws IOException {
+    public void regstriationToRegistry() throws IOException {
         InetAddress localHost = InetAddress.getLocalHost();
         debug_print(getHostname());
         Register register = new Register(localHost.getHostName(),localHost.getHostAddress(), serverSocket.getLocalPort());
@@ -93,10 +103,11 @@ public class MessagingNode implements Node {
         debug_print("Registration message sent to registry.");
     }
 
+/**
+ * Computers on the domain can use hostname whereas computers on the same network can use ip address
+ */
     public static void main(String[] args) {
-        System.out.println("MessagingNode starting...");
-        debug_print("MessagingNode starting...");
-        if (args.length < 2) {
+        if (args.length != 2 && args.length != 3) {
             debug_print("Usage: java MessagingNode <registry host> <registry port> [--DEBUG]");
             return;
         }

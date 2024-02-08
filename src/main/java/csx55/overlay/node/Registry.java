@@ -2,10 +2,12 @@ package csx55.overlay.node;
 
 import csx55.overlay.transport.TCPReceiverThread;
 import csx55.overlay.transport.TCPServerThread;
+import csx55.overlay.transport.TCPSender;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.util.DEBUG;
 import csx55.overlay.wireformats.Event;
 import csx55.overlay.wireformats.Register;
+import csx55.overlay.wireformats.RegisterResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import static csx55.overlay.util.DEBUG.debug_print;
 
 public class Registry implements Node {
     private final TCPServerThread serverThread;
+
+    private TCPSender sender;
     private final ConcurrentHashMap<String, NodeWrapper> registeredNodes; // Changed to NodeWrapper
     private final OverlayCreator overlayCreator;
     private final int serverPort;
@@ -119,13 +123,26 @@ public class Registry implements Node {
         System.out.println("Sending overlay link weights... (implement as needed)");
     }
 
-    public synchronized void registerNode(String hostname, String ip, int port) {
-        String key = hostname + ":" + port; // Unique key to identify node
+    public synchronized void registerNode(String hostname, String ip, int port) throws RuntimeException, IOException {
+        String key = hostname + ":" + port;
+        String successMessage =" “Registration request\n" +
+                "successful. The number of messaging nodes currently constituting the overlay is (";
+        byte success = 1;
         if (!registeredNodes.containsKey(key)) {
             NodeWrapper nodeWrapper = new NodeWrapper(hostname, ip, port);
             registeredNodes.put(key, nodeWrapper);
+            RegisterResponse response = new RegisterResponse(success, successMessage + registeredNodes.size() + ").");
+            try {
+                sender.sendMessage(response.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             debug_print("Node registered: " + nodeWrapper);
         } else {
+            success = 0;
+            RegisterResponse response = new RegisterResponse(success, "Node already registered.");
+            sender.sendMessage(response.getBytes());
             debug_print("Node already registered: " + hostname + ":" + port);
         }
     }
@@ -141,17 +158,21 @@ public class Registry implements Node {
     }
 
     @Override
-    public void onEvent(Event event) {
+    public void onEvent(Event event)  {
         debug_print("Registry received an event of type: " + event.getType());
         if (event instanceof Register) {
             Register registerEvent = (Register) event;
             String ipAddress = registerEvent.getIpAddress();
             String hostname = registerEvent.getHostname();
             int port = registerEvent.getPort();
-            registerNode(hostname,ipAddress,port);
-        
-        
-    }
+            try {
+                registerNode(hostname,ipAddress,port);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        }
 }
 
 
