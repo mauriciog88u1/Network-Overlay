@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LinkWeights implements Event {
     private final Map<String, Integer> linkweights;
@@ -33,7 +33,7 @@ public class LinkWeights implements Event {
         }
     }
 
-    public void generateLinkWeights(ConcurrentMap<String, List<String>> overlay) {
+    public void generateLinkWeights(ConcurrentHashMap<String, List<String>> overlay) {
         overlay.forEach((node, connections) -> connections.forEach(connection -> {
             String link = node.compareTo(connection) < 0 ? node + "-" + connection : connection + "-" + node;
             if (!linkweights.containsKey(link)) {

@@ -1,8 +1,0 @@
-
-<
-java:S1700"Rename field "linkweights"(š¶áîùÿÿÿÿ8Û‚œÕØ1
-{	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(Ï¶Æïùÿÿÿÿ8—¯˜ÕØ1
-C
-java:S1170"!Make this final field static too.(Œ”áüÿÿÿÿ8œ¯˜ÕØ1
-m
-java:S3776$"PRefactor this method to reduce its Cognitive Complexity from 6 to the 5 allowed.(—•îÞ8£¯˜ÕØ1
