@@ -30,7 +30,6 @@ public class MessagingNodesList implements Event {
         int numNodes = din.readInt();
         this.messagingNodesInfo = new ArrayList<>();
 
-        // Read each node's info
         for (int i = 0; i < numNodes; i++) {
             int infoLength = din.readInt();
             byte[] infoBytes = new byte[infoLength];
@@ -41,7 +40,6 @@ public class MessagingNodesList implements Event {
         din.close();
     }
 
-    // Method to serialize the message into bytes
     public byte[] getBytes() throws IOException {
         ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(baOutputStream);
@@ -49,11 +47,10 @@ public class MessagingNodesList implements Event {
         dout.writeInt(this.messageType);
         dout.writeInt(this.messagingNodesInfo.size()); // Number of nodes
 
-        // Write each node's info as string
         for (String nodeInfo : this.messagingNodesInfo) {
             byte[] infoBytes = nodeInfo.getBytes();
-            dout.writeInt(infoBytes.length); // Length of node info string
-            dout.write(infoBytes); // Node info string bytes
+            dout.writeInt(infoBytes.length);
+            dout.write(infoBytes);
         }
 
         dout.flush();

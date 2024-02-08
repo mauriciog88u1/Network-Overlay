@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class OverlayCreator {
+    private ConcurrentHashMap<String, List<String>> overlayMap;
 
     public ConcurrentHashMap<String, List<String>> createOverlay(ConcurrentHashMap<String, NodeWrapper> registeredNodes, int numberOfConnections) {
         List<String> nodeKeys = new ArrayList<>(registeredNodes.keySet());
@@ -27,8 +28,14 @@ public class OverlayCreator {
             }
             overlayMap.put(nodeKeys.get(i), connections);
         }
+this.overlayMap = overlayMap;
 
         return overlayMap;
     }
+
+    public ConcurrentHashMap<String, List<String>> getOverlayMap() {
+        return overlayMap;
+    }
+
 
 }

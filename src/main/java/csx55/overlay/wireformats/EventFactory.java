@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 
 public class EventFactory implements Protocol {
 
-    private static volatile EventFactory instance = null;
 
     private EventFactory() {}
 
@@ -16,16 +15,6 @@ public class EventFactory implements Protocol {
      * Purpose of this method is to create a singleton instance of the EventFactory class
      * This is to ensure that only one instance of the EventFactory class is created
      */
-    public static EventFactory getInstance() {
-        if (instance == null) {
-            synchronized (EventFactory.class) {
-                if (instance == null) {
-                    instance = new EventFactory();
-                }
-            }
-        }
-        return instance;
-    }
 
 
     public  static Event createEvent(byte[] data) throws IOException {
@@ -43,10 +32,10 @@ public class EventFactory implements Protocol {
                 e = new Deregister(data);
                 break;
             case MESSAGING_NODES_LIST:
-                DEBUG.debug_print("Creating MessagingNodesList");
+                e = new MessagingNodesList(data);
                 break;
             case LINK_WEIGHTS:
-                DEBUG.debug_print("Creating LinkWeights");
+                e = new LinkWeights(data);
                 break;
             case TASK_INITIATE:
                 DEBUG.debug_print("Creating TaskInitiate");

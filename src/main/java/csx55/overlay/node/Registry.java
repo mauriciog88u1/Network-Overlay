@@ -71,7 +71,6 @@ public class Registry implements Node {
     private void processCommand(String command) {
         String[] tokens = command.split("\\s+");
         debug_print("Processing command: " + command);
-        int numConnections = registeredNodes.size() - 1;
         switch (tokens[0]) {
             case "list-messaging-nodes":
                 listMessagingNodes();
@@ -80,13 +79,14 @@ public class Registry implements Node {
                 listWeights();
                 break;
             case "setup-overlay":
-                setupOverlay(numConnections);
+                setupOverlay(Integer.parseInt(tokens[1]));
                 break;
             case "send-overlay-link-weights":
                 sendOverlayLinkWeights();
                 break;
             default:
-                System.out.println("Unknown command: " + tokens[0]);
+                String usage = "Usage: list-messaging-nodes | list-weights | setup-overlay <number-of-connections> | send-overlay-link-weights";
+                System.out.println("Unknown command: " + command + "\n" + usage);
                 break;
         }
     }
@@ -96,7 +96,7 @@ public class Registry implements Node {
     }
 
     private void listWeights() {
-        debug_print("Overlay weights listing is not implemented.");
+
     }
 
 
@@ -128,7 +128,28 @@ public class Registry implements Node {
 
         System.out.println("Overlay setup complete. Each node is connected to " + numberOfConnections + " other nodes.");
     }
-    // Method to send MESSAGING_NODES_LIST messages
+
+    private void sendOverlayLinkWeights() {
+        LinkWeights linkWeights = new LinkWeights();
+        ConcurrentHashMap<String, List<String>> overlay = overlayCreator.getOverlayMap();
+        linkWeights.generateLinkWeights(overlay);
+
+        try {
+            byte[] message = linkWeights.getBytes();
+
+            for (NodeWrapper node : registeredNodes.values()) {
+                TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
+                sender.sendMessage(message);
+                sender.closeConnection();
+            }
+
+          DEBUG.debug_print("Link weights sent to all nodes.");
+        } catch (IOException e) {
+            DEBUG.debug_print("Error sending link weights: " + e.getMessage());
+            System.err.println("Error sending link weights: " + e.getMessage());
+        }
+    }
+
     private void sendMessagingNodesList(String ip, int port, MessagingNodesList message) throws IOException {
         try {
             TCPSender sender = new TCPSender(new Socket(ip, port));
@@ -137,10 +158,6 @@ public class Registry implements Node {
         catch (IOException e) {
             System.err.println("Error sending MESSAGING_NODES_LIST to " + ip + ":" + port + ": " + e.getMessage());
         }
-    }
-
-    private void sendOverlayLinkWeights() {
-        debug_print("Sending overlay link weights is not implemented.");
     }
 
     public synchronized void registerNode(String hostname, String ip, int port) {

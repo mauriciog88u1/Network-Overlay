@@ -1,5 +1,6 @@
 package csx55.overlay.node;
 
+import csx55.overlay.dijkstra.ShortestPath;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.transport.TCPReceiverThread;
 import csx55.overlay.util.DEBUG;
@@ -77,6 +78,15 @@ public class MessagingNode implements Node {
         } else if (event instanceof MessagingNodesList) {
             handleMessagingNodesList((MessagingNodesList) event);
         }
+          else if (event instanceof LinkWeights) {
+            handleLinkWeights((LinkWeights) event);
+        }
+    }
+
+    private void handleLinkWeights(LinkWeights event) {
+        debug_print("Received link weights from registry:");
+        event.getLinkweights().forEach((k, v) -> debug_print(k + " -> " + v));
+
     }
 
     private void handleMessagingNodesList(MessagingNodesList event) {
@@ -85,6 +95,7 @@ public class MessagingNode implements Node {
         for (String nodeInfo : nodeInfoList) {
             debug_print(nodeInfo);
         }
+
     }
 
     private void handleRegisterResponse(RegisterResponse response) {
@@ -121,6 +132,34 @@ public class MessagingNode implements Node {
     @Override
     public void handleNewConnection(Socket clientSocket) {
         new TCPReceiverThread(clientSocket, this).start();
+    }
+    private void processCommand(String command) {
+                switch (command) {
+                    case "print-shortest-path":
+                        printShortestPath();
+                        break;
+                    case "exit-overlay":
+                        exitOverlay();
+                        break;
+                    default:
+                        DEBUG.debug_print("Unknown command: " + command);
+                        String usage = "Usage: print-shortest-path | exit-overlay";
+                        System.out.println(usage);
+                }
+
+
+
+        }
+
+    private void exitOverlay() {
+        debug_print("Exiting overlay... for node " + getHostname());
+        deregisterFromRegistry();
+        System.exit(0);
+    }
+
+    private void printShortestPath() {
+        ShortestPath shortestPath = new ShortestPath();
+        debug_print("Shortest path to all nodes:");
     }
 
     public static void main(String[] args) {
