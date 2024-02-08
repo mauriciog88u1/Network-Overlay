@@ -13,7 +13,11 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static csx55.overlay.util.DEBUG.debug_print;
 
@@ -95,8 +99,44 @@ public class Registry implements Node {
         debug_print("Overlay weights listing is not implemented.");
     }
 
-    private void setupOverlay(int numberOfConnections) {
-        debug_print("Overlay setup with " + numberOfConnections + " connections per node is not implemented.");
+
+    public synchronized void setupOverlay(int numberOfConnections) {
+        if (registeredNodes.size() < numberOfConnections + 1) { // +1 because a node cannot connect to itself
+            System.err.println("Error: Not enough nodes registered to create an overlay with " + numberOfConnections + " connections per node.");
+            return;
+        }
+
+        OverlayCreator overlayCreator = new OverlayCreator();
+        ConcurrentHashMap<String, List<String>> overlay = overlayCreator.createOverlay(registeredNodes, numberOfConnections);
+
+        overlay.forEach((nodeKey, connections) -> {
+            try {
+                NodeWrapper node = registeredNodes.get(nodeKey);
+                List<String> connectionInfoList = connections.stream()
+                        .map(connectionKey -> {
+                            NodeWrapper connectionNode = registeredNodes.get(connectionKey);
+                            return connectionNode.getHostname() + ":" + connectionNode.getPort();
+                        })
+                        .collect(Collectors.toList());
+
+                MessagingNodesList message = new MessagingNodesList(connectionInfoList.size(), connectionInfoList);
+                sendMessagingNodesList(node.getIp(), node.getPort(), message);
+            } catch (IOException e) {
+                System.err.println("Error sending MESSAGING_NODES_LIST to " + nodeKey + ": " + e.getMessage());
+            }
+        });
+
+        System.out.println("Overlay setup complete. Each node is connected to " + numberOfConnections + " other nodes.");
+    }
+    // Method to send MESSAGING_NODES_LIST messages
+    private void sendMessagingNodesList(String ip, int port, MessagingNodesList message) throws IOException {
+        try {
+            TCPSender sender = new TCPSender(new Socket(ip, port));
+            sender.sendMessage(message.getBytes());
+        }
+        catch (IOException e) {
+            System.err.println("Error sending MESSAGING_NODES_LIST to " + ip + ":" + port + ": " + e.getMessage());
+        }
     }
 
     private void sendOverlayLinkWeights() {
