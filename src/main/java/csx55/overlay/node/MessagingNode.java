@@ -135,6 +135,7 @@ public class MessagingNode implements Node {
         Random random = new Random();
 
         for (int i = 0; i < event.getRounds(); i++) {
+            DEBUG.debug_print(networkTopology.toString());
             String destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
             List<String> path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             DEBUG.debug_print("Path to " + destination + ": " + path);
@@ -184,17 +185,19 @@ public class MessagingNode implements Node {
             String[] nodes = link.split("-");
             String source = nodes[0];
             String destination = nodes[1];
+            DEBUG.debug_print("Link: " + source + " -> " + destination + " with weight: " + weight);
 
-            networkTopology.putIfAbsent(source, new HashMap<>());
+            networkTopology.put(source, new HashMap<>());
             networkTopology.get(source).put(destination, weight);
         });
     }
     public void computeAndCacheShortestPath(String destination) {
         String source = this.getIp() + ":" + this.getPort();
-        if (!networkTopology.containsKey(source)) {
-            debug_print("No paths from this node.");
+        if (networkTopology.isEmpty() || !networkTopology.containsKey(source)) {
+            debug_print("Network topology is empty or source node is missing in topology.");
             return;
         }
+
 
         ShortestPath shortestPathCalculator = new ShortestPath();
         List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
