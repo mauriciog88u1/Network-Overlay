@@ -264,10 +264,6 @@ public class Registry implements Node {
         }
     }
 
-    private void handleRegisterEvent(Register registerEvent) {
-        registerNode(registerEvent.getHostname(), registerEvent.getIpAddress(), registerEvent.getPort());
-    }
-
     @Override
     public String getHostname() {
         return hostname;
