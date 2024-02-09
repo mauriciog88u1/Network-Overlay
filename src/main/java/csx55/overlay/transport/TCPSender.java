@@ -25,7 +25,7 @@ public class TCPSender {
         try {
             out.writeInt(message.length);
             out.write(message);
-            DEBUG.debug_print("Sent message: " + bytesToHex(message));
+//            DEBUG.debug_print("Sent message: " + bytesToHex(message)); This provides bytes useful for debuggin but leaving commented because it spams cli
             out.flush();
         } catch (IOException e) {
             System.out.println("Error sending message: " + e.getMessage());
