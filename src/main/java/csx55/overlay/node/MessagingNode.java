@@ -136,7 +136,7 @@ public class MessagingNode implements Node {
 
         for (int i = 0; i < event.getRounds(); i++) {
             String destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
-            List<String> path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
+            List<String> path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             DEBUG.debug_print("Path to " + destination + ": " + path);
 
             if (path == null) {
