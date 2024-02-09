@@ -86,6 +86,9 @@ public class Registry implements Node {
             case "send-overlay-link-weights":
                 sendOverlayLinkWeights();
                 break;
+            case "start-number-of-rounds":
+                startMessageSending(Integer.parseInt(tokens[1]));
+                break;
             default:
                 String usage = "Usage: list-messaging-nodes | list-weights | setup-overlay <number-of-connections> | send-overlay-link-weights";
                 System.out.println("Unknown command: " + command + "\n" + usage);

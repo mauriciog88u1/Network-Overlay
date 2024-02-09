@@ -18,4 +18,10 @@ public class RoutingCache {
     public void addPath(String source, String sink, List<String> path) {
         cache.put(source + "->" + sink, path);
     }
+
+    public void printCache() {
+        for (Map.Entry<String, List<String>> entry : cache.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
 }

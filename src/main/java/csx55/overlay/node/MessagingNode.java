@@ -1,16 +1,20 @@
 package csx55.overlay.node;
 
+import csx55.overlay.dijkstra.RoutingCache;
 import csx55.overlay.dijkstra.ShortestPath;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.transport.TCPReceiverThread;
 import csx55.overlay.util.DEBUG;
 import csx55.overlay.wireformats.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static csx55.overlay.util.DEBUG.debug_print;
 
@@ -18,23 +22,46 @@ public class MessagingNode implements Node {
     private TCPSender sender;
     private ServerSocket serverSocket;
 
-    private int sendTracker = 0;
-    private int receiveTracker = 0;
+    private final AtomicInteger sendTracker = new AtomicInteger();
+    private final AtomicInteger receiveTracker = new AtomicInteger();
+
+    private Map<String, Map<String, Integer>> networkTopology;
+
+    private RoutingCache routingCache;
+
+
 
     public MessagingNode(String registryHost, int registryPort) {
         try {
             Socket registrySocket = new Socket(registryHost, registryPort);
             this.sender = new TCPSender(registrySocket);
             this.serverSocket = new ServerSocket(0); // Dynamically allocate a port
+            this.routingCache = new RoutingCache();
+            this.networkTopology = new HashMap<>();
+
 
             debug_print("Connected to registry at " + registryHost + ":" + registryPort);
             debug_print("MessagingNode listening on port: " + serverSocket.getLocalPort());
 
             listenForConnections();
             registrationToRegistry();
+            listenForCommands();
             setupShutdownHook();
         } catch (IOException e) {
             debug_print("Error initializing MessagingNode: " + e.getMessage());
+        }
+    }
+
+    private void listenForCommands() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("Messaging Node listening for commands...");
+        String command;
+        try {
+            while ((command = reader.readLine()) != null) {
+                processCommand(command);
+            }
+        } catch (IOException e) {
+            debug_print("Error reading command: " + e.getMessage());
         }
     }
 
@@ -45,12 +72,14 @@ public class MessagingNode implements Node {
                     Socket clientSocket = serverSocket.accept();
                     debug_print("Accepted connection from " + clientSocket.getRemoteSocketAddress());
                     new TCPReceiverThread(clientSocket, this).start();
+
                 }
             } catch (IOException e) {
                 debug_print("Error accepting connection: " + e.getMessage());
             }
         }).start();
     }
+
 
     private void registrationToRegistry() throws IOException {
         InetAddress localHost = InetAddress.getLocalHost();
@@ -84,16 +113,83 @@ public class MessagingNode implements Node {
         } else if (event instanceof TaskInitiate) {
             handleTaskInitiate((TaskInitiate) event);
         }
+        else if (event instanceof Message) {
+            handleReceivedMessage((Message) event);
+        }
     }
-    private void handleTaskInitiate(TaskInitiate event) {
-      debug_print("Received task initiate message from registry: " + event.getRounds() + " rounds");
 
+    private void handleReceivedMessage(Message event) {
+        receiveTracker.incrementAndGet();
+        if (event.getRroutingTable().size() > 1) {
+            String nextHopIdentifier = event.getRroutingTable().get(0);
+            event.getRroutingTable().remove(0);
+            sendMessageToNextHop(nextHopIdentifier, event);
+        } else {
+            debug_print("Received message: " + event.getPayload());
+        }
     }
+
+    private void handleTaskInitiate(TaskInitiate event) {
+        Random random = new Random();
+        for (int i = 0; i < event.getRounds(); i++) {
+            String destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
+            List<String> path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
+            if (path == null) {
+                computeAndCacheShortestPath(destination);
+                path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
+            }
+            if (path != null && !path.isEmpty()) {
+                path.remove(0);
+                if (!path.isEmpty()) {
+                    String nextHopIdentifier = path.get(0);
+                    int payload = random.nextInt();
+                    Message message = new Message(path, payload);
+                    sendMessageToNextHop(nextHopIdentifier, message);
+                    sendTracker.incrementAndGet();
+                }
+            }
+        }
+    }
+
+    private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
+        String[] parts = nextHopIdentifier.split(":");
+        String hostname = parts[0];
+        int port = Integer.parseInt(parts[1]);
+
+        try {
+            Socket socket = new Socket(hostname, port);
+            TCPSender sender = new TCPSender(socket);
+            sender.sendMessage(message.getBytes());
+        } catch (IOException e) {
+            debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
+        }
+    }
+
+
+
     private void handleLinkWeights(LinkWeights event) {
         debug_print("Received link weights from registry:");
-        System.out.println("“Link weights received and processed. Ready to send messages.");
-        event.getLinkweights().forEach((k, v) -> debug_print(k + " -> " + v));
+        System.out.println("Link weights received and processed. Ready to send messages.");
 
+        event.getLinkweights().forEach((link, weight) -> {
+            String[] nodes = link.split("-");
+            String source = nodes[0];
+            String destination = nodes[1];
+
+            networkTopology.putIfAbsent(source, new HashMap<>());
+            networkTopology.get(source).put(destination, weight);
+        });
+    }
+    public void computeAndCacheShortestPath(String destination) {
+        String source = this.getIp() + ":" + this.getPort();
+        if (!networkTopology.containsKey(source)) {
+            debug_print("No paths from this node.");
+            return;
+        }
+
+        ShortestPath shortestPathCalculator = new ShortestPath();
+        List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
+        routingCache.addPath(source, destination, path);
     }
 
     private void handleMessagingNodesList(MessagingNodesList event) {
@@ -165,8 +261,7 @@ public class MessagingNode implements Node {
     }
 
     private void printShortestPath() {
-        ShortestPath shortestPath = new ShortestPath();
-        debug_print("Shortest path to all nodes:");
+        routingCache.printCache();
     }
 
     public static void main(String[] args) {

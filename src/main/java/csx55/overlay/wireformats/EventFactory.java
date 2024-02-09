@@ -38,16 +38,19 @@ public class EventFactory implements Protocol {
                 e = new LinkWeights(data);
                 break;
             case TASK_INITIATE:
-                DEBUG.debug_print("Creating TaskInitiate");
+                e = new TaskInitiate(data);
                 break;
             case TASK_COMPLETE:
-                DEBUG.debug_print("Creating TaskComplete");
+                e = new TaskComplete(data);
                 break;
             case PULL_TRAFFIC_SUMMARY:
                 DEBUG.debug_print("Creating PullTrafficSummary");
                 break;
             case TRAFFIC_SUMMARY:
                 DEBUG.debug_print("Creating TrafficSummary");
+                break;
+            case MESSAGE:
+                e = new Message(data);
                 break;
 
             default:

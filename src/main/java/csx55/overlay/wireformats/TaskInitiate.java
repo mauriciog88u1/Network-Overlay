@@ -6,17 +6,15 @@ public class TaskInitiate implements Event {
     private int messageType = Protocol.TASK_INITIATE;
     private int rounds;
 
-    // Constructor for creating an instance to send
     public TaskInitiate(int rounds) {
         this.rounds = rounds;
     }
 
-    // Constructor for deserializing data
     public TaskInitiate(byte[] data) throws IOException {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         DataInputStream dis = new DataInputStream(bais);
 
-        this.messageType = dis.readInt(); // Assuming the first read is the message type
+        this.messageType = dis.readInt();
         this.rounds = dis.readInt();
     }
 
@@ -39,4 +37,6 @@ public class TaskInitiate implements Event {
         dos.flush();
         return baos.toByteArray();
     }
+
+
 }

@@ -22,4 +22,10 @@ public final int PULL_TRAFFIC_SUMMARY = 9;
 
 public final int TRAFFIC_SUMMARY = 10;
 
+
+
+public final int MESSAGE = 13;
+
+
+
 }
