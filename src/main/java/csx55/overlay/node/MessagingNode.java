@@ -142,7 +142,7 @@ public class MessagingNode implements Node {
             if (path == null) {
                 DEBUG.debug_print("Path not found in cache. Computing and caching...");
                 computeAndCacheShortestPath(destination);
-                path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
+                path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             }
             if (path != null && !path.isEmpty()) {
                 DEBUG.debug_print("Sending message to next hop...");
