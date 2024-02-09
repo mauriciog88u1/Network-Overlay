@@ -16,12 +16,14 @@ import static csx55.overlay.util.DEBUG.debug_print;
 
 public class MessagingNode implements Node {
     private TCPSender sender;
-    private Socket registrySocket;
     private ServerSocket serverSocket;
+
+    private int sendTracker = 0;
+    private int receiveTracker = 0;
 
     public MessagingNode(String registryHost, int registryPort) {
         try {
-            this.registrySocket = new Socket(registryHost, registryPort);
+            Socket registrySocket = new Socket(registryHost, registryPort);
             this.sender = new TCPSender(registrySocket);
             this.serverSocket = new ServerSocket(0); // Dynamically allocate a port
 
@@ -77,14 +79,19 @@ public class MessagingNode implements Node {
             handleRegisterResponse((RegisterResponse) event);
         } else if (event instanceof MessagingNodesList) {
             handleMessagingNodesList((MessagingNodesList) event);
-        }
-          else if (event instanceof LinkWeights) {
+        } else if (event instanceof LinkWeights) {
             handleLinkWeights((LinkWeights) event);
+        } else if (event instanceof TaskInitiate) {
+            handleTaskInitiate((TaskInitiate) event);
         }
     }
+    private void handleTaskInitiate(TaskInitiate event) {
+      debug_print("Received task initiate message from registry: " + event.getRounds() + " rounds");
 
+    }
     private void handleLinkWeights(LinkWeights event) {
         debug_print("Received link weights from registry:");
+        System.out.println("“Link weights received and processed. Ready to send messages.");
         event.getLinkweights().forEach((k, v) -> debug_print(k + " -> " + v));
 
     }

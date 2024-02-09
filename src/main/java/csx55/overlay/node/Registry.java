@@ -13,8 +13,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -218,6 +216,20 @@ public class Registry implements Node {
             } catch (IOException e) {
                 debug_print("Error sending deregister response: " + e.getMessage());
             }
+        }
+    }
+    private void startMessageSending(int rounds) {
+        TaskInitiate taskInitiate = new TaskInitiate(rounds);
+        try {
+            byte[] message = taskInitiate.getBytes();
+            for (NodeWrapper node : registeredNodes.values()) {
+                TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
+                sender.sendMessage(message);
+                sender.closeConnection();
+            }
+            System.out.println("Initiated message sending for " + rounds + " rounds.");
+        } catch (IOException e) {
+            System.err.println("Error initiating message sending: " + e.getMessage());
         }
     }
 
