@@ -14,6 +14,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static csx55.overlay.util.DEBUG.debug_print;
@@ -25,7 +26,7 @@ public class MessagingNode implements Node {
     private final AtomicInteger sendTracker = new AtomicInteger();
     private final AtomicInteger receiveTracker = new AtomicInteger();
 
-    private Map<String, Map<String, Integer>> networkTopology;
+    private ConcurrentHashMap <String, Map<String, Integer>> networkTopology;
 
     private RoutingCache routingCache;
 
@@ -37,7 +38,7 @@ public class MessagingNode implements Node {
             this.sender = new TCPSender(registrySocket);
             this.serverSocket = new ServerSocket(0); // Dynamically allocate a port
             this.routingCache = new RoutingCache();
-            this.networkTopology = new HashMap<>();
+            this.networkTopology = new ConcurrentHashMap<>();
 
 
             debug_print("Connected to registry at " + registryHost + ":" + registryPort);
