@@ -176,23 +176,19 @@ public class MessagingNode implements Node {
     }
 
 
-
     private void handleLinkWeights(LinkWeights event) {
-        debug_print("Received link weights from registry:");
-        System.out.println("Link weights received and processed. Ready to send messages.");
-
         event.getLinkweights().forEach((link, weight) -> {
-            String[] nodes = link.split("-");
-            String source = nodes[0];
-            String destination = nodes[1];
-            DEBUG.debug_print("Link: " + source + " -> " + destination + " with weight: " + weight);
-
-            networkTopology.put(source, new HashMap<>());
-            networkTopology.get(source).put(destination, weight);
+            String[] parts = link.split("-");
+            String node1 = parts[0];
+            String node2 = parts[1];
+            Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
+            connections.put(node2, weight);
+            networkTopology.put(node1, connections);
         });
     }
     public void computeAndCacheShortestPath(String destination) {
         String source = this.getIp() + ":" + this.getPort();
+//        todo print the network topology and see if the source is in the network topology
         if (networkTopology.isEmpty() || !networkTopology.containsKey(source)) {
             debug_print("Network topology is empty or source node is missing in topology.");
             return;
@@ -205,13 +201,31 @@ public class MessagingNode implements Node {
     }
 
     private void handleMessagingNodesList(MessagingNodesList event) {
-        List<String> nodeInfoList = event.getMessagingNodesInfo();
-        debug_print("Received list of messaging nodes to connect to:");
-        for (String nodeInfo : nodeInfoList) {
-            debug_print(nodeInfo);
-        }
+    List<String> messagingNodesInfo = event.getMessagingNodesInfo();
 
+    if (messagingNodesInfo.isEmpty()) {
+        debug_print("No peer messaging nodes to connect to.");
+        return;
     }
+
+    AtomicInteger connectionCount = new AtomicInteger(0);
+    for (String nodeInfo : messagingNodesInfo) {
+        String[] parts = nodeInfo.split(":");
+        String hostname = parts[0];
+        int port = Integer.parseInt(parts[1]);
+
+        try {
+            Socket socket = new Socket(hostname, port);
+            new TCPReceiverThread(socket, this).start();
+            connectionCount.incrementAndGet();
+            debug_print("Connected to peer messaging node: " + nodeInfo);
+        } catch (IOException e) {
+            debug_print("Failed to connect to peer messaging node: " + nodeInfo);
+        }
+    }
+
+    debug_print("All connections are established. Number of connections: " + connectionCount);
+}
 
     private void handleRegisterResponse(RegisterResponse response) {
         if (response.getStatusCode() == 1) {
