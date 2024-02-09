@@ -1,25 +1,31 @@
 package csx55.overlay.dijkstra;
 
+import csx55.overlay.util.DEBUG;
+
 import java.util.*;
 
 public class ShortestPath {
 
     public List<String> computeShortestPath(Map<String, Map<String, Integer>> graph, String source, String sink) {
+        DEBUG.debug_print("Called computeShortestPath with graph: " + graph + " source: " + source + " sink: " + sink);
         Set<String> settledNodes = new HashSet<>();
         Set<String> unsettledNodes = new HashSet<>();
         Map<String, Integer> distances = new HashMap<>();
         Map<String, String> predecessors = new HashMap<>();
+        DEBUG.debug_print("Computing shortest path from " + source + " to " + sink);
         unsettledNodes.add(source);
         distances.put(source, 0);
 
         while (!unsettledNodes.isEmpty()) {
             String currentNode = getLowestDistanceNode(unsettledNodes, distances);
+            DEBUG.debug_print("Current node: " + currentNode);
             unsettledNodes.remove(currentNode);
             Map<String, Integer> adjacentNodes = graph.get(currentNode);
             if (adjacentNodes != null) {
                 for (Map.Entry<String, Integer> adjacencyPair : adjacentNodes.entrySet()) {
                     String adjacentNode = adjacencyPair.getKey();
                     Integer edgeWeight = adjacencyPair.getValue();
+                    DEBUG.debug_print("Checking node: " + adjacentNode + " with edge weight: " + edgeWeight);
                     if (!settledNodes.contains(adjacentNode)) {
                         calculateMinimumDistance(adjacentNode, edgeWeight, currentNode, distances, predecessors);
                         unsettledNodes.add(adjacentNode);
@@ -42,6 +48,7 @@ public class ShortestPath {
                 lowestDistanceNode = node;
             }
         }
+        DEBUG.debug_print("Lowest distance node: " + lowestDistanceNode);
         return lowestDistanceNode;
     }
 
@@ -51,6 +58,7 @@ public class ShortestPath {
         if (sourceDistance + edgeWeight < distances.getOrDefault(evaluationNode, Integer.MAX_VALUE)) {
             distances.put(evaluationNode, sourceDistance + edgeWeight);
             predecessors.put(evaluationNode, sourceNode);
+            DEBUG.debug_print("Updated distance for node: " + evaluationNode);
         }
     }
 
@@ -65,6 +73,7 @@ public class ShortestPath {
             step = predecessors.get(step);
             path.addFirst(step);
         }
+        DEBUG.debug_print("Path: " + path);
         return path;
     }
 }
