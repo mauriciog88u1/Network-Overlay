@@ -109,7 +109,6 @@ public class Registry implements Node {
             return;
         }
 
-        OverlayCreator overlayCreator = new OverlayCreator();
         ConcurrentHashMap<String, List<String>> overlay = overlayCreator.createOverlay(registeredNodes, numberOfConnections);
 
         overlay.forEach((nodeKey, connections) -> {
@@ -134,8 +133,13 @@ public class Registry implements Node {
 
     private void sendOverlayLinkWeights() {
         DEBUG.debug_print("Inside sendOverlayLinkWeights...");
+
         LinkWeights linkWeights = new LinkWeights();
         ConcurrentHashMap<String, List<String>> overlay = overlayCreator.getOverlayMap();
+        if (overlay == null || overlay.isEmpty()) {
+            debug_print("Overlay not set up yet. Cannot send link weights.");
+            return;
+        }
         linkWeights.generateLinkWeights(overlay);
 
         try {
