@@ -130,20 +130,29 @@ public class MessagingNode implements Node {
     }
 
     private void handleTaskInitiate(TaskInitiate event) {
+        DEBUG.debug_print("Received task initiate event: " + event.getRounds());
+
         Random random = new Random();
+
         for (int i = 0; i < event.getRounds(); i++) {
             String destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
             List<String> path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
+            DEBUG.debug_print("Path to " + destination + ": " + path);
+
             if (path == null) {
+                DEBUG.debug_print("Path not found in cache. Computing and caching...");
                 computeAndCacheShortestPath(destination);
                 path = routingCache.getPath(this.getIp() + ":" + this.getPort(), destination);
             }
             if (path != null && !path.isEmpty()) {
+                DEBUG.debug_print("Sending message to next hop...");
                 path.remove(0);
                 if (!path.isEmpty()) {
+                    DEBUG.debug_print("path not emptty next hop is: " + path.get(0) + " sending message" );
                     String nextHopIdentifier = path.get(0);
                     int payload = random.nextInt();
                     Message message = new Message(path, payload);
+                    debug_print("Sending message to next hop: " + nextHopIdentifier);
                     sendMessageToNextHop(nextHopIdentifier, message);
                     sendTracker.incrementAndGet();
                 }
