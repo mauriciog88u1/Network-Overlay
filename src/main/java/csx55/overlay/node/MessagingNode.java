@@ -187,7 +187,16 @@ public class MessagingNode implements Node {
         event.getLinkweights().forEach((link, weight) -> {
             String[] nodes = link.split("-");
             debug_print("Adding link weight: " + link + " with weight: " + weight);
-            networkTopology.computeIfAbsent(nodes[0], k -> new HashMap<>()).put(nodes[1], weight);
+            debug_print("Nodes: " + nodes[0] + " and " + nodes[1]);
+            try{
+                if (nodes[0].equals(getSelfIdentifier())) {
+                    networkTopology.computeIfAbsent(nodes[0], k -> new HashMap<>()).put(nodes[1], weight);
+                } else if (nodes[1].equals(getSelfIdentifier())) {
+                    networkTopology.computeIfAbsent(nodes[1], k -> new HashMap<>()).put(nodes[0], weight);
+                }
+            } catch (Exception e) {
+                debug_print("Error adding link weight: " + e.getMessage());
+            }
         });
     }
 
