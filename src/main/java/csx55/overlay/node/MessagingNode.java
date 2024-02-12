@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static csx55.overlay.util.DEBUG.debug_print;
 import static csx55.overlay.wireformats.Protocol.*;
 
 public class MessagingNode implements Node {
@@ -28,19 +29,25 @@ public class MessagingNode implements Node {
     private final AtomicInteger receiveTracker = new AtomicInteger();
     private ConcurrentHashMap<String, Map<String, Integer>> networkTopology;
     private RoutingCache routingCache;
+    private String localNodeIdentifier;
+
 
     public MessagingNode(String registryHost, int registryPort) {
         try {
+            serverSocket = new ServerSocket(0); // Dynamically allocate a port
+            localNodeIdentifier = InetAddress.getLocalHost().getCanonicalHostName() + ":" + serverSocket.getLocalPort();
             Socket registrySocket = new Socket(registryHost, registryPort);
-            this.sender = new TCPSender(registrySocket);
-            this.serverSocket = new ServerSocket(0);
-            this.routingCache = new RoutingCache();
-            this.networkTopology = new ConcurrentHashMap<>();
+            sender = new TCPSender(registrySocket);
+
+            debug_print("Connected to registry at " + registryHost + ":" + registryPort);
+            debug_print("MessagingNode listening on port: " + serverSocket.getLocalPort());
+
             listenForConnections();
             registrationToRegistry();
             listenForCommands();
             setupShutdownHook();
         } catch (IOException e) {
+            debug_print("Error initializing MessagingNode: " + e.getMessage());
         }
     }
 
@@ -60,24 +67,30 @@ public class MessagingNode implements Node {
             try {
                 while (!serverSocket.isClosed()) {
                     Socket clientSocket = serverSocket.accept();
+                    debug_print("Accepted connection from " + clientSocket.getRemoteSocketAddress());
                     new TCPReceiverThread(clientSocket, this).start();
                 }
             } catch (IOException e) {
+                debug_print("Error accepting connection: " + e.getMessage());
             }
         }).start();
     }
 
     private void registrationToRegistry() throws IOException {
         InetAddress localHost = InetAddress.getLocalHost();
-        Register register = new Register(localHost.getHostName(), localHost.getHostAddress(), serverSocket.getLocalPort());
+        Register register = new Register(localHost.getCanonicalHostName(), localHost.getHostAddress(), serverSocket.getLocalPort());
         sender.sendMessage(register.getBytes());
+        debug_print("Registration message sent to registry.");
     }
 
     private void deregisterFromRegistry() {
         try {
             Deregister deregister = new Deregister(getIp(), getPort());
             sender.sendMessage(deregister.getBytes());
+            System.out.println("Deregistered from registry.");
+            debug_print("Deregistration request sent to registry.");
         } catch (IOException e) {
+            debug_print("Error sending deregistration request: " + e.getMessage());
         }
     }
 
@@ -87,6 +100,7 @@ public class MessagingNode implements Node {
 
     @Override
     public void onEvent(Event event) {
+        debug_print("Received event: " + event.getType());
         switch (event.getType()) {
             case REGISTER_RESPONSE:
                 handleRegisterResponse((RegisterResponse) event);
@@ -158,39 +172,71 @@ public class MessagingNode implements Node {
 
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
         try {
+
             String[] parts = nextHopIdentifier.split(":");
             Socket socket = new Socket(parts[0], Integer.parseInt(parts[1]));
+            debug_print("Sending message to next hop: " + nextHopIdentifier);
             new TCPSender(socket).sendMessage(message.getBytes());
         } catch (IOException e) {
+            debug_print("Error sending message to next hop: " + e.getMessage());
         }
     }
 
     private void handleLinkWeights(LinkWeights event) {
+
         event.getLinkweights().forEach((link, weight) -> {
             String[] nodes = link.split("-");
+            debug_print("Adding link weight: " + link + " with weight: " + weight);
             networkTopology.computeIfAbsent(nodes[0], k -> new HashMap<>()).put(nodes[1], weight);
         });
     }
 
     public void computeAndCacheShortestPath(String destination) {
         if (!networkTopology.containsKey(getSelfIdentifier())) {
+            debug_print("destination is " + destination + " and self is " + getSelfIdentifier());
             return;
         }
         List<String> path = new ShortestPath().computeShortestPath(networkTopology, getSelfIdentifier(), destination);
+        debug_print("Computed shortest path to " + destination + ": " + path);
         routingCache.addPath(getSelfIdentifier(), destination, path);
     }
 
     private void handleMessagingNodesList(MessagingNodesList event) {
-        event.getMessagingNodesInfo().forEach(nodeInfo -> {
+        List<String> messagingNodesInfo = event.getMessagingNodesInfo();
+
+        if (messagingNodesInfo.isEmpty()) {
+            debug_print("No peer messaging nodes to connect to.");
+            return;
+        }
+
+        AtomicInteger connectionCount = new AtomicInteger();
+        for (String nodeInfo : messagingNodesInfo) {
             String[] parts = nodeInfo.split(":");
+            String hostname = parts[0];
+            int port = Integer.parseInt(parts[1]);
             try {
-                new TCPReceiverThread(new Socket(parts[0], Integer.parseInt(parts[1])), this).start();
+                // Establish connection to each specified node
+                Socket socket = new Socket(hostname, port);
+                // Start listening for incoming messages on this connection
+                new TCPReceiverThread(socket, this).start();
+                connectionCount.incrementAndGet();
+                debug_print("Connected to peer messaging node: " + nodeInfo);
             } catch (IOException e) {
+                debug_print("Error connecting to node: " + nodeInfo + " - " + e.getMessage());
             }
-        });
+        }
+        debug_print("All connections are established. Number of connections: " + connectionCount.get());
     }
 
     private void handleRegisterResponse(RegisterResponse response) {
+         if (response.getStatusCode() == 1) {
+                System.out.println("Successfully registered with registry");
+
+          } else {
+             System.out.println("Failed to register with registry");
+                System.exit(1);
+          }
+
     }
 
     @Override
@@ -234,11 +280,14 @@ public class MessagingNode implements Node {
     }
 
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Usage: java MessagingNode <registry host> <registry port>");
+        if (args.length != 2 && args.length != 3) {
+            System.out.println("Usage: java MessagingNode <registry host> <registry port> --DEBUG ");
             return;
         }
-
+        if (args.length == 3 && args[2].equals("--DEBUG")) {
+            DEBUG.DEBUG = true;
+        }
+        debug_print("Starting MessagingNode with registry host: " + args[0] + " registry port: " + args[1] );
         new MessagingNode(args[0], Integer.parseInt(args[1]));
     }
 }

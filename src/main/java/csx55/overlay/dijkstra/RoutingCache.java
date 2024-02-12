@@ -18,6 +18,7 @@ public class RoutingCache {
     }
 
     public void addPath(String source, String sink, List<String> path) {
+        DEBUG.debug_print("Adding path to cache: " + source + "->" + sink + ": " + path);
         cache.put(source + "->" + sink, path);
     }
 
