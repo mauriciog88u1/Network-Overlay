@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -191,7 +192,12 @@ public class MessagingNode implements Node {
     }
 
     public void computeAndCacheShortestPath(String destination) {
-        String source = getHostname() + ":" + getPort();
+        String source = null;
+        try {
+            source = InetAddress.getLocalHost().getCanonicalHostName() + ":" + getPort();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
         debug_print("Attempting to find source in networkTopology: " + source);
         if (networkTopology.isEmpty()) {
             debug_print("Network topology is empty.");
