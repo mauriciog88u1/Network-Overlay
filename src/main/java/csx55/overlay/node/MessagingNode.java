@@ -139,47 +139,55 @@ public class MessagingNode implements Node {
     }
 
     private void handleTaskInitiate(TaskInitiate event) {
-        debug_print("We are currently in handle task initate with rounds " + event.getRounds());
+        debug_print("Handling task initiate with " + event.getRounds() + " rounds.");
         Random random = new Random();
         for (int i = 0; i < event.getRounds(); i++) {
             String destination = getRandomDestination();
-            debug_print("Trying to send a message to destination: "+ destination);
-            if (!destination.isEmpty()) {
-                debug_print("Destination was empty");
+            if (!destination.equals(getSelfIdentifier()) && !destination.isEmpty()) {
                 List<String> path = routingCache.getPath(getSelfIdentifier(), destination);
                 if (path == null) {
-                    debug_print("path was null old path is : "+path);
+                    debug_print("Path to " + destination + " not found in cache. Computing...");
                     computeAndCacheShortestPath(destination);
                     path = routingCache.getPath(getSelfIdentifier(), destination);
-                    debug_print("new path is" + path);
                 }
                 if (path != null && !path.isEmpty()) {
-                    debug_print("{path was not null}");
                     String nextHopIdentifier = path.get(0);
+                    debug_print("Sending message to " + nextHopIdentifier + " with path: " + path);
                     sendMessageToNextHop(nextHopIdentifier, new Message(path, random.nextInt()));
+                } else {
+                    debug_print("No path found to " + destination);
                 }
+            } else {
+                debug_print("Invalid destination: " + destination);
             }
         }
     }
 
     private String getRandomDestination() {
-        debug_print("We are in random des");
-        List<String> keys = new ArrayList<>(networkTopology.keySet());
-        debug_print("keys are " + networkTopology.toString());
-        keys.remove(getSelfIdentifier());
-        if (keys.isEmpty()) return "";
-        String randomDes = keys.get(new Random().nextInt() % keys.size());
-        debug_print("random destination is :" + randomDes);
-        return randomDes;
+        List<String> keysAsArray = new ArrayList<>(networkTopology.keySet());
+        debug_print("Keys as array: " + keysAsArray);
+        debug_print("Removing self identifier: " + getSelfIdentifier());
+        keysAsArray.remove(getSelfIdentifier());
+        if (keysAsArray.isEmpty()) {
+            debug_print("No other nodes to send to.");
+            return "";
+        }
+        String destination = keysAsArray.get(new Random().nextInt(keysAsArray.size()));
+        debug_print("Random destination selected: " + destination);
+        return destination;
     }
 
     private String getSelfIdentifier() {
         try {
-            return InetAddress.getLocalHost().getCanonicalHostName() + ":" + getPort();
+            String selfIdentifier = InetAddress.getLocalHost().getCanonicalHostName() + ":" + getPort();
+            debug_print("Self identifier: " + selfIdentifier);
+            return selfIdentifier;
         } catch (UnknownHostException e) {
+            debug_print("Unable to determine self identifier.");
             return "unknown";
         }
     }
+
 
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
         try {
