@@ -139,16 +139,22 @@ public class MessagingNode implements Node {
     }
 
     private void handleTaskInitiate(TaskInitiate event) {
+        debug_print("We are currently in handle task initate with rounds " + event.getRounds());
         Random random = new Random();
         for (int i = 0; i < event.getRounds(); i++) {
             String destination = getRandomDestination();
+            debug_print("Trying to send a message to destination: "+ destination);
             if (!destination.isEmpty()) {
+                debug_print("Destination was empty");
                 List<String> path = routingCache.getPath(getSelfIdentifier(), destination);
                 if (path == null) {
+                    debug_print("path was null old path is : "+path);
                     computeAndCacheShortestPath(destination);
                     path = routingCache.getPath(getSelfIdentifier(), destination);
+                    debug_print("new path is" + path);
                 }
                 if (path != null && !path.isEmpty()) {
+                    debug_print("{path was not null}");
                     String nextHopIdentifier = path.get(0);
                     sendMessageToNextHop(nextHopIdentifier, new Message(path, random.nextInt()));
                 }
@@ -157,10 +163,14 @@ public class MessagingNode implements Node {
     }
 
     private String getRandomDestination() {
+        debug_print("We are in random des");
         List<String> keys = new ArrayList<>(networkTopology.keySet());
+        debug_print("keys are " + networkTopology.toString());
         keys.remove(getSelfIdentifier());
         if (keys.isEmpty()) return "";
-        return keys.get(new Random().nextInt(keys.size()));
+        String randomDes = keys.get(new Random().nextInt() % keys.size());
+        debug_print("random destination is :" + randomDes);
+        return randomDes;
     }
 
     private String getSelfIdentifier() {
@@ -197,6 +207,10 @@ public class MessagingNode implements Node {
                 }
             } catch (Exception e) {
                 debug_print("Error adding link weight: " + e.getMessage());
+            }
+            if (networkTopology.size() < 0) {
+                debug_print("network topology is empty");
+                
             }
         });
     }
