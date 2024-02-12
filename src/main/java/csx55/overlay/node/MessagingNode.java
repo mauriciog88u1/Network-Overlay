@@ -140,6 +140,7 @@ public class MessagingNode implements Node {
 
     private void handleTaskInitiate(TaskInitiate event) {
         debug_print("Handling task initiate with " + event.getRounds() + " rounds.");
+        debug_print("network topology: " + networkTopology.keySet());
         Random random = new Random();
         for (int i = 0; i < event.getRounds(); i++) {
             String destination = getRandomDestination();
