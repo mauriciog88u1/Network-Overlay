@@ -38,6 +38,7 @@ public class MessagingNode implements Node {
             localNodeIdentifier = InetAddress.getLocalHost().getCanonicalHostName() + ":" + serverSocket.getLocalPort();
             Socket registrySocket = new Socket(registryHost, registryPort);
             sender = new TCPSender(registrySocket);
+            networkTopology = new ConcurrentHashMap<>();
 
             debug_print("Connected to registry at " + registryHost + ":" + registryPort);
             debug_print("MessagingNode listening on port: " + serverSocket.getLocalPort());
