@@ -185,21 +185,28 @@ public class MessagingNode implements Node {
             Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
             connections.put(node2, weight);
             networkTopology.put(node1, connections);
+            debug_print("Added to networkTopology: " + node1 + " -> " + node2 + " with weight " + weight);
+            System.out.println();
         });
     }
+
     public void computeAndCacheShortestPath(String destination) {
-        String source = this.getIp() + ":" + this.getPort();
-//        todo print the network topology and see if the source is in the network topology
-        if (networkTopology.isEmpty() || !networkTopology.containsKey(source)) {
-            debug_print("Network topology is empty or source node is missing in topology.");
+        String source = getHostname() + ":" + getPort();
+        debug_print("Attempting to find source in networkTopology: " + source);
+        if (networkTopology.isEmpty()) {
+            debug_print("Network topology is empty.");
             return;
         }
-
+        if (!networkTopology.containsKey(source)) {
+            debug_print("Source node is missing in topology. Available keys: " + networkTopology.keySet());
+            return;
+        }
 
         ShortestPath shortestPathCalculator = new ShortestPath();
         List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
         routingCache.addPath(source, destination, path);
     }
+
 
     private void handleMessagingNodesList(MessagingNodesList event) {
     List<String> messagingNodesInfo = event.getMessagingNodesInfo();
