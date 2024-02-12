@@ -6,7 +6,6 @@ import csx55.overlay.transport.TCPSender;
 import csx55.overlay.transport.TCPReceiverThread;
 import csx55.overlay.util.DEBUG;
 import csx55.overlay.wireformats.*;
-import csx55.overlay.wireformats.Protocol.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -141,9 +140,15 @@ public class MessagingNode implements Node {
     private void handleTaskInitiate(TaskInitiate event) {
         debug_print("Handling task initiate with " + event.getRounds() + " rounds.");
         debug_print("network topology: " + networkTopology.keySet());
+//        make sure link weights are received before sending messages
+        if (networkTopology.isEmpty()) {
+            debug_print("No link weights received yet. Waiting...");
+            return;
+        }
+
         Random random = new Random();
         for (int i = 0; i < event.getRounds(); i++) {
-            String destination = getRandomDestination();
+            String destination = getRandomDestination(networkTopology);
             if (!destination.equals(getSelfIdentifier()) && !destination.isEmpty()) {
                 List<String> path = routingCache.getPath(getSelfIdentifier(), destination);
                 if (path == null) {
@@ -164,10 +169,12 @@ public class MessagingNode implements Node {
         }
     }
 
-    private String getRandomDestination() {
-        String destination = (String) networkTopology.keySet().toArray()[new Random().nextInt(networkTopology.size())];
-        debug_print("Random destination: " + destination);
-        return destination;
+    private String getRandomDestination(ConcurrentHashMap<String, Map<String, Integer>> networktopology) {
+        List<String> nodes = new ArrayList<>(networktopology.keySet());
+        DEBUG.debug_print("Nodes: " + nodes);
+
+        return nodes.get(new Random().nextInt(nodes.size()));
+
     }
 
     private String getSelfIdentifier() {
