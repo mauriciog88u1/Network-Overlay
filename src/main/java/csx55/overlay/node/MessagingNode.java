@@ -164,16 +164,8 @@ public class MessagingNode implements Node {
     }
 
     private String getRandomDestination() {
-        List<String> keysAsArray = new ArrayList<>(networkTopology.keySet());
-        debug_print("Keys as array: " + keysAsArray);
-        debug_print("Removing self identifier: " + getSelfIdentifier());
-        keysAsArray.remove(getSelfIdentifier());
-        if (keysAsArray.isEmpty()) {
-            debug_print("No other nodes to send to.");
-            return "";
-        }
-        String destination = keysAsArray.get(new Random().nextInt(keysAsArray.size()));
-        debug_print("Random destination selected: " + destination);
+        String destination = (String) networkTopology.keySet().toArray()[new Random().nextInt(networkTopology.size())];
+        debug_print("Random destination: " + destination);
         return destination;
     }
 
