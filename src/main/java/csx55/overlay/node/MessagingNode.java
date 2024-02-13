@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -137,7 +138,14 @@ public class MessagingNode implements Node {
 
         for (int i = 0; i < event.getRounds(); i++) {
             DEBUG.debug_print(networkTopology.toString());
-            String destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
+            String destination;
+            try {
+                destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
+            } catch (Exception e) {
+             
+                e.printStackTrace();
+            }
+            debug_print( "Destination is: " + destination );
             List<String> path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             DEBUG.debug_print("Path to " + destination + ": " + path);
 
@@ -185,13 +193,11 @@ public class MessagingNode implements Node {
             Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
             connections.put(node2, weight);
             networkTopology.put(node1, connections);
-            debug_print("Added to networkTopology: " + node1 + " -> " + node2 + " with weight " + weight);
-            System.out.println();
         });
     }
 
     public void computeAndCacheShortestPath(String destination) {
-        String source = getHostname() + ":" + getPort();
+        String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
         debug_print("Attempting to find source in networkTopology: " + source);
         if (networkTopology.isEmpty()) {
             debug_print("Network topology is empty.");
@@ -298,6 +304,30 @@ public class MessagingNode implements Node {
         routingCache.printCache();
     }
 
+    // Getting full qualifed domain name 
+   /**
+ * Normalizes the hostname to its Fully Qualified Domain Name (FQDN), excluding port numbers.
+ *
+ * @param hostPort The hostname, which may include a port number.
+ * @return The FQDN of the hostname.
+ */
+        private String normalizeHostnameToFQDN(String hostPort) {
+            try {
+                // Extract the hostname part if the input includes a port number
+                String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort;
+                
+                InetAddress addr = InetAddress.getByName(hostname);
+         
+                String fqdn = addr.getCanonicalHostName();
+                return fqdn;
+            } catch (UnknownHostException e) {
+                debug_print("Failed to normalize hostname to FQDN: " + hostPort + ", error: " + e.getMessage());
+                // Return the original hostname if it cannot be normalized to FQDN
+                return hostPort;
+            }
+        }
+
+   
     public static void main(String[] args) {
         if (args.length != 2 && args.length != 3) {
             System.out.println("Usage: java MessagingNode <registry host> <registry port> [--DEBUG]");
