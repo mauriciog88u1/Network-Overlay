@@ -18,12 +18,14 @@ public class RoutingCache {
     }
 
     public void addPath(String source, String sink, List<String> path) {
+        DEBUG.debug_print("Adding path to cache: " + source + "->" + sink + ": " + path);
         cache.put(source + "->" + sink, path);
     }
 
     public void printCache() {
         DEBUG.debug_print("RoutingCache: ");
         DEBUG.debug_print("Size: " + cache.size());
+        
         for (Map.Entry<String, List<String>> entry : cache.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
