@@ -133,22 +133,31 @@ public class MessagingNode implements Node {
 
     private void handleTaskInitiate(TaskInitiate event) {
         DEBUG.debug_print("Received task initiate event: " + event.getRounds());
-
+    
         Random random = new Random();
-
+    
         for (int i = 0; i < event.getRounds(); i++) {
             DEBUG.debug_print(networkTopology.toString());
-            String destination;
-            try {
-                destination = networkTopology.keySet().stream().skip(random.nextInt(networkTopology.size())).findFirst().orElse(null);
-            } catch (Exception e) {
-             
-                e.printStackTrace();
+    
+            if (networkTopology.isEmpty()) {
+                debug_print("Network topology is empty. Cannot select a destination.");
+                continue; // Skip this iteration as there's no destination to select
             }
-            debug_print( "Destination is: " + destination );
+    
+            String destination = networkTopology.keySet().stream()
+                                  .skip(random.nextInt(networkTopology.size()))
+                                  .findFirst()
+                                  .orElse(null);
+    
+            if (destination == null) {
+                debug_print("Failed to select a destination. Skipping this round.");
+                continue; // Skip this iteration as no destination was selected
+            }
+    
+            debug_print("Destination is: " + destination);
             List<String> path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             DEBUG.debug_print("Path to " + destination + ": " + path);
-
+    
             if (path == null) {
                 DEBUG.debug_print("Path not found in cache. Computing and caching...");
                 computeAndCacheShortestPath(destination);
@@ -156,9 +165,9 @@ public class MessagingNode implements Node {
             }
             if (path != null && !path.isEmpty()) {
                 DEBUG.debug_print("Sending message to next hop...");
-                path.remove(0);
+                path.remove(0); // Adjust logic here if necessary
                 if (!path.isEmpty()) {
-                    DEBUG.debug_print("path not emptty next hop is: " + path.get(0) + " sending message" );
+                    DEBUG.debug_print("Path not empty. Next hop is: " + path.get(0) + ". Sending message.");
                     String nextHopIdentifier = path.get(0);
                     int payload = random.nextInt();
                     Message message = new Message(path, payload);
@@ -169,7 +178,7 @@ public class MessagingNode implements Node {
             }
         }
     }
-
+    
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
         String[] parts = nextHopIdentifier.split(":");
         String hostname = parts[0];
