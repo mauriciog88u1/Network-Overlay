@@ -159,6 +159,7 @@ public class MessagingNode implements Node {
 
 
     private void handleReceivedMessage(Message event) {
+        debug_print("[DEBUG]Received message: " + event.getPayload() + " from " + event.getRroutingTable().get(0));
         receiveTracker.incrementAndGet();
         if (event.getRroutingTable().size() > 1) {
             relayTracker.incrementAndGet();
@@ -242,8 +243,8 @@ public class MessagingNode implements Node {
         try {
             Socket socket = new Socket(hostname, port);
             TCPSender sender = new TCPSender(socket);
-            sender.sendMessage(message.getBytes());
             sendTracker.incrementAndGet();
+            sender.sendMessage(message.getBytes());
         } catch (IOException e) {
             debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
         }
@@ -254,9 +255,9 @@ public class MessagingNode implements Node {
         event.getLinkweights().forEach((link, weight) -> {
             String[] parts = link.split("@"); 
             System.out.println();
-            debug_print("We are getting link " + link + " and parts " + Arrays.toString(parts));
+//            debug_print("We are getting link " + link + " and parts " + Arrays.toString(parts));
             //  change parts instead of - because hostnames can contain -
-            debug_print("Parts: " + Arrays.toString(parts));
+//            debug_print("Parts: " + Arrays.toString(parts));
             String node1 = parts[0];
             String node2 = parts[1];
             Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());

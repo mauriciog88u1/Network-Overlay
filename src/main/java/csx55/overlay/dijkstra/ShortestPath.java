@@ -18,14 +18,14 @@ public class ShortestPath {
 
         while (!unsettledNodes.isEmpty()) {
             String currentNode = getLowestDistanceNode(unsettledNodes, distances);
-            DEBUG.debug_print("Processing node: " + currentNode + " with current distance: " + distances.get(currentNode));
+//            DEBUG.debug_print("Processing node: " + currentNode + " with current distance: " + distances.get(currentNode));
             unsettledNodes.remove(currentNode);
             Map<String, Integer> adjacentNodes = graph.get(currentNode);
             if (adjacentNodes != null) {
                 for (Map.Entry<String, Integer> adjacencyPair : adjacentNodes.entrySet()) {
                     String adjacentNode = adjacencyPair.getKey();
                     Integer edgeWeight = adjacencyPair.getValue();
-                    DEBUG.debug_print("Checking node: " + adjacentNode + " with edge weight: " + edgeWeight);
+//                    DEBUG.debug_print("Checking node: " + adjacentNode + " with edge weight: " + edgeWeight);
                     if (!settledNodes.contains(adjacentNode)) {
                         calculateMinimumDistance(adjacentNode, edgeWeight, currentNode, distances, predecessors);
                         unsettledNodes.add(adjacentNode);
@@ -48,7 +48,7 @@ public class ShortestPath {
                 lowestDistanceNode = node;
             }
         }
-        DEBUG.debug_print("Lowest distance node: " + lowestDistanceNode);
+//        DEBUG.debug_print("Lowest distance node: " + lowestDistanceNode);
         return lowestDistanceNode;
     }
 
