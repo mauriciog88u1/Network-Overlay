@@ -328,12 +328,20 @@ public class Registry implements Node {
     private void sendTaskSummaryRequest() throws IOException {
         TaskSummaryRequest taskSummaryRequest = new TaskSummaryRequest();
         byte[] message = taskSummaryRequest.getBytes();
+        try {
+            DEBUG.debug_print("Waiting 15 seconds before sending Task Summary Request...");
+            Thread.sleep(15000); // 15 secound wait time
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         for (NodeWrapper node : registeredNodes.values()) {
             try {
+
                 Socket socket = new Socket(node.getIp(), node.getPort());
                 TCPSender sender = new TCPSender(socket);
                 sender.sendMessage(message);
+                debug_print("Sent Task Summary Request to " + node.getIp() + ":" + node.getPort());
             }
 
             catch (IOException e) {
