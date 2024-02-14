@@ -140,22 +140,23 @@ public class MessagingNode implements Node {
     }
 
     private void handlePullTrafficSummary(TaskSummaryRequest event) {
-        debug_print("Received traffic summary request. Sending summary.. " +event.getType());
+        debug_print("Received traffic summary request. Sending summary.. " + event.getType());
         try {
             TaskSummaryResponse response = new TaskSummaryResponse(getIp(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
             sender.sendMessage(response.getBytes());
-            DEBUG.debug_print("Sending Traffic Summary for " + getHostname());
+            debug_print("Sending Traffic Summary for " + getHostname());
         } catch (IOException e) {
             System.out.println("Error sending traffic summary: " + e.getMessage());
             System.exit(1);
-        }
-        finally {
-            debug_print(String.format("Resetting counters: counters old values : Sendsummation: %d recieveSum %d realytrack %d", sendSummation, receiveSummation, relayTracker));
+        } finally {
+            debug_print(String.format("Resetting counters: counters old values : Sendsummation: %d, receiveSummation: %d, relayTrack: %d",
+                    sendSummation.get(), receiveSummation.get(), relayTracker.get()));
             sendSummation.set(0);
             receiveSummation.set(0);
             relayTracker.set(0);
         }
     }
+
 
     private void handleReceivedMessage(Message event) {
         receiveTracker.incrementAndGet();
