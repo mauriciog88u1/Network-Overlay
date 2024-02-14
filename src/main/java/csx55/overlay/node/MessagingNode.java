@@ -17,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static csx55.overlay.util.DEBUG.debug_print;
 
@@ -26,6 +27,9 @@ public class MessagingNode implements Node {
 
     private final AtomicInteger sendTracker = new AtomicInteger(0);
     private final AtomicInteger receiveTracker = new AtomicInteger(0);
+    private final AtomicInteger relayTracker = new AtomicInteger(0);
+    private final AtomicLong sendSummation = new AtomicLong(0);
+    private final AtomicLong receiveSummation = new AtomicLong(0);
 
     private ConcurrentHashMap <String, Map<String, Integer>> networkTopology;
 
@@ -132,11 +136,14 @@ public class MessagingNode implements Node {
     private void handleReceivedMessage(Message event) {
         receiveTracker.incrementAndGet();
         if (event.getRroutingTable().size() > 1) {
+            relayTracker.incrementAndGet();
+
             String nextHopIdentifier = event.getRroutingTable().get(0);
             event.getRroutingTable().remove(0);
             sendMessageToNextHop(nextHopIdentifier, event);
         } else {
-            debug_print("Received message: " + event.getPayload());
+            receiveSummation.addAndGet(event.getPayload());
+            debug_print("Sink node has recieved messages" +receiveSummation);
         }
     }
 
@@ -151,7 +158,7 @@ public class MessagingNode implements Node {
                 continue;
             }
     
-            String destination = networkTopology.keySet().stream()
+            String destination = networkTopology.keySet().stream() // this will get a random destination in the map and then optimze the route to it
                                   .skip(random.nextInt(networkTopology.size()))
                                   .findFirst()
                                   .orElse(null);
@@ -188,10 +195,11 @@ public class MessagingNode implements Node {
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
         DEBUG.debug_print("Sending message to next hop: " + nextHopIdentifier);
         DEBUG.debug_print("Message: " + message.getPayload());
+        sendSummation.addAndGet(message.getPayload());
         String[] parts = nextHopIdentifier.split(":");
         String hostname = parts[0];
         int port = Integer.parseInt(parts[1]);
-
+        
         try {
             Socket socket = new Socket(hostname, port);
             TCPSender sender = new TCPSender(socket);

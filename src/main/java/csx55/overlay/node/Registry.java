@@ -75,7 +75,7 @@ public class Registry implements Node {
     private void processCommand(String command) {
         String[] tokens = command.split("\\s+");
         debug_print("Processing command: " + command);
-        switch (tokens[0]) {
+        switch (tokens[0].strip()) {
             case "list-messaging-nodes":
                 listMessagingNodes();
                 break;
@@ -96,7 +96,7 @@ public class Registry implements Node {
                 startMessageSending(number_of_rounds);
                 break;
             default:
-                String usage = "Usage: list-messaging-nodes | list-weights | setup-overlay <number-of-connections> | send-overlay-link-weights";
+                String usage = "Usage: list-messaging-nodes | list-weights | setup-overlay <number-of-connections> | send-overlay-link-weights | start-number-of-rounds";
                 System.out.println("Unknown command: " + command + "\n" + usage);
                 break;
         }
@@ -119,7 +119,7 @@ public class Registry implements Node {
             System.out.println("Setup overlay and send link weights first.");
         } else {
             linkWeightsMap.forEach((link, weight) -> {
-                String[] nodes = link.split("_");
+                String[] nodes = link.split("@");
                 System.out.println(String.format(format, nodes[0], nodes[1], weight));
              
             });
@@ -167,6 +167,7 @@ public class Registry implements Node {
         }
         linkWeights.generateLinkWeights(overlay);
         this.linkWeightsMap = linkWeights.getLinkweights();
+        System.out.println(linkWeights.toString());
     
         try {
             byte[] message = linkWeights.getBytes();
