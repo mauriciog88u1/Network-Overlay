@@ -1,58 +1,52 @@
 package csx55.overlay.wireformats;
 
-import csx55.overlay.util.DEBUG;
+import java.io.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-public class TaskSummaryResponse implements Event{
+public class TaskSummaryResponse implements Event {
 
     private int messageType;
     private String nodeIP;
     private int nodePort;
-    private Long SummationOfSentMessages;
-    private Long SummationOfReceivedMessages;
+    private long summationOfSentMessages;
+    private long summationOfReceivedMessages;
     private int relayedMessages;
 
-    public TaskSummaryResponse(String nodeIP, int nodePort, long SummationOfSentMessages, long SummationOfReceivedMessages, int relayedMessages) {
+    public TaskSummaryResponse(String nodeIP, int nodePort, long summationOfSentMessages, long summationOfReceivedMessages, int relayedMessages) {
         this.messageType = Protocol.TRAFFIC_SUMMARY;
         this.nodeIP = nodeIP;
         this.nodePort = nodePort;
-        this.SummationOfSentMessages = SummationOfSentMessages;
-        this.SummationOfReceivedMessages = SummationOfReceivedMessages;
+        this.summationOfSentMessages = summationOfSentMessages;
+        this.summationOfReceivedMessages = summationOfReceivedMessages;
         this.relayedMessages = relayedMessages;
-
     }
 
-    public TaskSummaryResponse(byte[] data) {
-        String[] dataArray = new String(data).split(" ");
-        this.messageType = Integer.parseInt(dataArray[0]);
-        this.nodeIP = dataArray[1];
-        this.nodePort = Integer.parseInt(dataArray[2]);
-        this.SummationOfSentMessages = Long.parseLong(dataArray[3]);
-        this.SummationOfReceivedMessages = Long.parseLong(dataArray[4]);
-        this.relayedMessages = Integer.parseInt(dataArray[5]);
+    public TaskSummaryResponse(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        DataInputStream dis = new DataInputStream(bais);
+
+        this.messageType = dis.readInt();
+        this.nodeIP = dis.readUTF();
+        this.nodePort = dis.readInt();
+        this.summationOfSentMessages = dis.readLong();
+        this.summationOfReceivedMessages = dis.readLong();
+        this.relayedMessages = dis.readInt();
     }
 
     @Override
     public byte[] getBytes() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (baos; DataOutputStream dos = new DataOutputStream(baos)) {
-            dos.writeInt(messageType);
-            dos.writeBytes(nodeIP + " ");
-            dos.writeInt(nodePort);
-            dos.writeLong(SummationOfSentMessages);
-            dos.writeLong(SummationOfReceivedMessages);
-            dos.writeInt(relayedMessages);
-            dos.flush();
-        } catch (IOException e) {
-            DEBUG.debug_print("Error: TaskSummaryResponse: getBytes: " + e.getMessage());
-        }
+        DataOutputStream dos = new DataOutputStream(baos);
+
+        dos.writeInt(messageType);
+        dos.writeUTF(nodeIP);
+        dos.writeInt(nodePort);
+        dos.writeLong(summationOfSentMessages);
+        dos.writeLong(summationOfReceivedMessages);
+        dos.writeInt(relayedMessages);
+
+        dos.flush();
         return baos.toByteArray();
-
     }
-
 
     public String getNodeIP() {
         return nodeIP;
@@ -62,12 +56,12 @@ public class TaskSummaryResponse implements Event{
         return nodePort;
     }
 
-    public Long getSummationOfSentMessages() {
-        return SummationOfSentMessages;
+    public long getSummationOfSentMessages() {
+        return summationOfSentMessages;
     }
 
-    public Long getSummationOfReceivedMessages() {
-        return SummationOfReceivedMessages;
+    public long getSummationOfReceivedMessages() {
+        return summationOfReceivedMessages;
     }
 
     public int getRelayedMessages() {
