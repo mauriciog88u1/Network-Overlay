@@ -354,5 +354,6 @@ public class Registry implements Node {
         int port = Integer.parseInt(args[0]);
         Registry registry = new Registry(port);
         registry.start();
+        
     }
 }
