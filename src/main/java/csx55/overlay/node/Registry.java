@@ -13,7 +13,9 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class Registry implements Node {
     private final int serverPort;
     private String hostname;
     private String ip;
+    private Map<String, Integer> linkWeightsMap;
+
 
     public Registry(int serverPort) {
         this.serverPort = serverPort;
@@ -33,6 +37,7 @@ public class Registry implements Node {
         serverThread = new TCPServerThread(serverPort, this);
         registeredNodes = new ConcurrentHashMap<>();
         overlayCreator = new OverlayCreator();
+        linkWeightsMap = new HashMap<>();
     }
 
     private void initializeServerDetails() {
@@ -97,13 +102,29 @@ public class Registry implements Node {
     }
 
     private void listMessagingNodes() {
-        registeredNodes.forEach((key, value) -> debug_print(key + " -> " + value.toString()));
+        if (registeredNodes.isEmpty()) {
+            System.out.println("No messaging nodes registered.");
+            return;
+        }
+
+        for (NodeWrapper node : registeredNodes.values()) {
+            System.out.println(String.format("%s %d", node.getHostname(), node.getPort()));
+        }
     }
 
     private void listWeights() {
-        overlayCreator.getOverlayMap().forEach((node, connections) -> System.out.println(node + " -> " + connections));
-
+        String format = "%s %s %d";
+        if (linkWeightsMap.isEmpty()) {
+            System.out.println("Setup overlay and send link weights first.");
+        } else {
+            linkWeightsMap.forEach((link, weight) -> {
+                String[] nodes = link.split("_");
+                System.out.println(String.format(format, nodes[0], nodes[1], weight));
+             
+            });
+        }
     }
+    
 
 
     public synchronized void setupOverlay(int numberOfConnections) {
@@ -136,7 +157,7 @@ public class Registry implements Node {
 
     private void sendOverlayLinkWeights() {
         DEBUG.debug_print("Inside sendOverlayLinkWeights...");
-
+    
         LinkWeights linkWeights = new LinkWeights();
         ConcurrentHashMap<String, List<String>> overlay = overlayCreator.getOverlayMap();
         if (overlay == null || overlay.isEmpty()) {
@@ -144,23 +165,24 @@ public class Registry implements Node {
             return;
         }
         linkWeights.generateLinkWeights(overlay);
-
+        this.linkWeightsMap = linkWeights.getLinkweights();
+    
         try {
             byte[] message = linkWeights.getBytes();
-
+    
             for (NodeWrapper node : registeredNodes.values()) {
                 TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
                 sender.sendMessage(message);
                 sender.closeConnection();
             }
-
-          DEBUG.debug_print("Link weights sent to all nodes.");
+    
+            DEBUG.debug_print("Link weights sent to all nodes.");
         } catch (IOException e) {
             DEBUG.debug_print("Error sending link weights: " + e.getMessage());
             System.err.println("Error sending link weights: " + e.getMessage());
         }
     }
-
+    
     private void sendMessagingNodesList(String ip, int port, MessagingNodesList message) throws IOException {
         try {
             TCPSender sender = new TCPSender(new Socket(ip, port));
@@ -260,7 +282,6 @@ public class Registry implements Node {
         }
         else {
             System.err.println("Unknown event type: " + event.getType());
-            debug_print("Unknown event type: " + event.getType());
         }
     }
 

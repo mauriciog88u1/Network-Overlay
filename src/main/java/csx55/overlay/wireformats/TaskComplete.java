@@ -1,6 +1,8 @@
 package csx55.overlay.wireformats;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TaskComplete implements Event {
@@ -21,7 +23,12 @@ public class TaskComplete implements Event {
     }
     @Override
     public byte[] getBytes() throws IOException {
-        return new byte[0];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+
+        dos.writeInt(messageType);
+        dos.writeInt(1);
+        return baos.toByteArray();
 
     }
 

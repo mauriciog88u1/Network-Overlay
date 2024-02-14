@@ -35,7 +35,7 @@ public class LinkWeights implements Event {
 
     public void generateLinkWeights(ConcurrentHashMap<String, List<String>> overlay) {
         overlay.forEach((node, connections) -> connections.forEach(connection -> {
-            String link = node.compareTo(connection) < 0 ? node + "-" + connection : connection + "-" + node;
+            String link = node.compareTo(connection) < 0 ? node + "@" + connection : connection + "@" + node; 
             if (!linkweights.containsKey(link)) {
                 linkweights.put(link, 1 + random.nextInt(10));
             }

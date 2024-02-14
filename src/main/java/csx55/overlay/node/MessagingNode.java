@@ -24,8 +24,8 @@ public class MessagingNode implements Node {
     private TCPSender sender;
     private ServerSocket serverSocket;
 
-    private final AtomicInteger sendTracker = new AtomicInteger();
-    private final AtomicInteger receiveTracker = new AtomicInteger();
+    private final AtomicInteger sendTracker = new AtomicInteger(0);
+    private final AtomicInteger receiveTracker = new AtomicInteger(0);
 
     private ConcurrentHashMap <String, Map<String, Integer>> networkTopology;
 
@@ -106,18 +106,27 @@ public class MessagingNode implements Node {
 
     @Override
     public void onEvent(Event event) {
-        if (event instanceof RegisterResponse) {
+       switch (event.getType()) {
+        case Protocol.REGISTER_RESPONSE:
             handleRegisterResponse((RegisterResponse) event);
-        } else if (event instanceof MessagingNodesList) {
+            break;
+        case Protocol.MESSAGING_NODES_LIST:
             handleMessagingNodesList((MessagingNodesList) event);
-        } else if (event instanceof LinkWeights) {
+            break;
+        case Protocol.LINK_WEIGHTS:
             handleLinkWeights((LinkWeights) event);
-        } else if (event instanceof TaskInitiate) {
+            break;
+        case Protocol.TASK_INITIATE:
             handleTaskInitiate((TaskInitiate) event);
-        }
-        else if (event instanceof Message) {
+            break;
+        case Protocol.MESSAGE:
             handleReceivedMessage((Message) event);
-        }
+            break;
+
+        default:
+            System.out.println("Unknown event type: " + event.getType());
+            break;
+       }
     }
 
     private void handleReceivedMessage(Message event) {
@@ -165,7 +174,7 @@ public class MessagingNode implements Node {
             }
             if (path != null && !path.isEmpty()) {
                 DEBUG.debug_print("Sending message to next hop...");
-                path.remove(0); // Adjust logic here if necessary
+                path.remove(0);
                 if (!path.isEmpty()) {
                     DEBUG.debug_print("Path not empty. Next hop is: " + path.get(0) + ". Sending message.");
                     String nextHopIdentifier = path.get(0);
@@ -180,6 +189,8 @@ public class MessagingNode implements Node {
     }
     
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
+        DEBUG.debug_print("Sending message to next hop: " + nextHopIdentifier);
+        DEBUG.debug_print("Message: " + message.getPayload());
         String[] parts = nextHopIdentifier.split(":");
         String hostname = parts[0];
         int port = Integer.parseInt(parts[1]);
@@ -196,7 +207,15 @@ public class MessagingNode implements Node {
 
     private void handleLinkWeights(LinkWeights event) {
         event.getLinkweights().forEach((link, weight) -> {
-            String[] parts = link.split("-");
+           System.out.println("-----------------------------------------------------------------------------------------------------------");
+           System.out.println("Link: " + link + " Weight: " + weight);
+           System.out.println("event is: " + event.getLinkweights());
+              System.out.println("-----------------------------------------------------------------------------------------------------------");
+            String[] parts = link.split("@"); 
+            System.out.println();
+            debug_print("We are getting link " + link + " and parts " + Arrays.toString(parts));
+            //  change parts instead of - because hostnames can contain -
+            debug_print("Parts: " + Arrays.toString(parts));
             String node1 = parts[0];
             String node2 = parts[1];
             Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
@@ -222,7 +241,7 @@ public class MessagingNode implements Node {
         routingCache.addPath(source, destination, path);
     }
 
-
+    // THis method is hanbdling the messaging nodes list by connecting to the nodes from the list per each node`
     private void handleMessagingNodesList(MessagingNodesList event) {
     List<String> messagingNodesInfo = event.getMessagingNodesInfo();
 
@@ -310,28 +329,19 @@ public class MessagingNode implements Node {
     }
 
     private void printShortestPath() {
-        routingCache.printCache();
+        routingCache.printCache(networkTopology);
     }
 
-    // Getting full qualifed domain name 
-   /**
- * Normalizes the hostname to its Fully Qualified Domain Name (FQDN), excluding port numbers.
- *
- * @param hostPort The hostname, which may include a port number.
- * @return The FQDN of the hostname.
- */
+
         private String normalizeHostnameToFQDN(String hostPort) {
             try {
-                // Extract the hostname part if the input includes a port number
-                String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort;
-                
+                String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort; 
                 InetAddress addr = InetAddress.getByName(hostname);
          
                 String fqdn = addr.getCanonicalHostName();
                 return fqdn;
             } catch (UnknownHostException e) {
                 debug_print("Failed to normalize hostname to FQDN: " + hostPort + ", error: " + e.getMessage());
-                // Return the original hostname if it cannot be normalized to FQDN
                 return hostPort;
             }
         }
