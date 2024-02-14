@@ -211,7 +211,9 @@ public class MessagingNode implements Node {
                     int payload = random.nextInt();
                     Message message = new Message(path, payload);
                     debug_print("Sending message to next hop: " + nextHopIdentifier);
-                    sendMessageToNextHop(nextHopIdentifier, message);
+                    for (int j =0; j < 5; j++) { // send the message 5 times per instrctuons and canvas message
+                        sendMessageToNextHop(nextHopIdentifier, message);
+                    }
                 }
             }
         }
