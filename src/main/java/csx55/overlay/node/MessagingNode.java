@@ -24,6 +24,8 @@ import static csx55.overlay.util.DEBUG.debug_print;
 public class MessagingNode implements Node {
     private TCPSender sender;
     private ServerSocket serverSocket;
+    private String registry_hostname;
+    private int registry_port;
 
     private final AtomicInteger sendTracker = new AtomicInteger(0);
     private final AtomicInteger receiveTracker = new AtomicInteger(0);
@@ -44,6 +46,8 @@ public class MessagingNode implements Node {
             this.serverSocket = new ServerSocket(0); // Dynamically allocate a port
             this.routingCache = new RoutingCache();
             this.networkTopology = new ConcurrentHashMap<>();
+            this.registry_hostname = registryHost;
+            this.registry_port = registry_port;
 
 
             debug_print("Connected to registry at " + registryHost + ":" + registryPort);
@@ -190,6 +194,20 @@ public class MessagingNode implements Node {
                 }
             }
         }
+        System.out.println("Finished Rounds "+ event.getRounds());
+
+        try{
+
+        TaskComplete complete = new TaskComplete(getHostname(), getPort());
+        Socket socket = new Socket(registry_hostname,registry_port);
+        TCPSender sender = new TCPSender(socket);
+        sender.sendMessage(complete.getBytes());
+
+        }
+        catch(Exception e){
+            DEBUG.debug_print(e.getMessage());
+        }
+
     }
     
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
