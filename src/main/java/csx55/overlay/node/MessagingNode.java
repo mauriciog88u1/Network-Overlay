@@ -195,14 +195,14 @@ public class MessagingNode implements Node {
             }
         }
         System.out.println("Finished Rounds "+ event.getRounds());
-
+        
         try{
 
         TaskComplete complete = new TaskComplete(getHostname(), getPort());
         Socket socket = new Socket(registry_hostname,registry_port);
         TCPSender sender = new TCPSender(socket);
         sender.sendMessage(complete.getBytes());
-
+        DEBUG.debug_print("Sending Complete for " + getHostname());
         }
         catch(Exception e){
             DEBUG.debug_print(e.getMessage());

@@ -282,9 +282,39 @@ public class Registry implements Node {
             String hostname = deregEvent.getHostname();
             deregisterNode(hostname, ipAddress, port);
         }
+        else if(event instanceof TaskComplete){
+            TaskComplete complete = (TaskComplete) event;
+            String ipAddress = complete.getNodeIPAddress();
+            int portNum = complete.getNodePort();
+            
+           handleTaskComplete(ipAddress,portNum);
+        }
         else {
             System.err.println("Unknown event type: " + event.getType());
         }
+    }
+
+    private void handleTaskComplete(String hostname, int port) {
+        debug_print("Calling handle Task complete with ");
+        String key = hostname + ":" + port;
+        int totalNodes = registeredNodes.size();
+        var nodeCopy = registeredNodes;
+
+        if (nodeCopy.containsKey(key)) {
+                totalNodes--;
+                nodeCopy.remove(key);
+       
+        } 
+        if(totalNodes < 0){
+            //  Send task complete here 
+        }
+        else {
+           debug_print(key +" not in " + listMessagingNodes());
+        }
+            
+    
+
+
     }
 
     @Override
