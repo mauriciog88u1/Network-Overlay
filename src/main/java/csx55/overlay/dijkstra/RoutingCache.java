@@ -26,7 +26,6 @@ public class RoutingCache {
     public void printCache(ConcurrentHashMap<String, Map<String, Integer>> networkTopology) {
     
         for (String source : networkTopology.keySet()) {
-            System.out.println("Shortest paths from node " + source + ":");
             for (String destination : networkTopology.keySet()) {
                 if (!source.equals(destination)) { 
                     List<String> path = getPath(source, destination);

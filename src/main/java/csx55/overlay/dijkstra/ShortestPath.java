@@ -18,7 +18,7 @@ public class ShortestPath {
 
         while (!unsettledNodes.isEmpty()) {
             String currentNode = getLowestDistanceNode(unsettledNodes, distances);
-            DEBUG.debug_print("Current node: " + currentNode);
+            DEBUG.debug_print("Processing node: " + currentNode + " with current distance: " + distances.get(currentNode));
             unsettledNodes.remove(currentNode);
             Map<String, Integer> adjacentNodes = graph.get(currentNode);
             if (adjacentNodes != null) {

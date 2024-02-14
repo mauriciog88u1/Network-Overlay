@@ -329,6 +329,7 @@ public class MessagingNode implements Node {
     }
 
     private void printShortestPath() {
+        debug_print("Current networkTopology: " + networkTopology);
         routingCache.printCache(networkTopology);
     }
 
@@ -348,6 +349,8 @@ public class MessagingNode implements Node {
 
    
     public static void main(String[] args) {
+
+	System.out.println("NEW VERISION CHECKING IF IT UPDATEd");
         if (args.length != 2 && args.length != 3) {
             System.out.println("Usage: java MessagingNode <registry host> <registry port> [--DEBUG]");
             return;
