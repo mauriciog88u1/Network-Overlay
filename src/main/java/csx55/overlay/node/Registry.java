@@ -321,6 +321,7 @@ public class Registry implements Node {
                 System.err.println("Error in sending Summary Request " + e.getMessage());
             }
         }
+        
     }
 
     @Override
