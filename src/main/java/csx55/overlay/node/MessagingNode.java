@@ -142,7 +142,7 @@ public class MessagingNode implements Node {
     private void handlePullTrafficSummary(TaskSummaryRequest event) {
         debug_print("Received traffic summary request. Sending summary.. " + event.getType());
         try {
-            TaskSummaryResponse response = new TaskSummaryResponse(getIp(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
+            TaskSummaryResponse response = new TaskSummaryResponse(getHostname(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
             sender.sendMessage(response.getBytes());
             debug_print("Sending Traffic Summary for " + getHostname());
         } catch (IOException e) {

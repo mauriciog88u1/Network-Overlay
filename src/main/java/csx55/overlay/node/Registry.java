@@ -293,7 +293,6 @@ public class Registry implements Node {
             TaskComplete complete = (TaskComplete) event;
             String ipAddress = normalizeHostnameToFQDN(complete.getNodeIPAddress());
             int portNum = complete.getNodePort();
-            
            handleTaskComplete(ipAddress,portNum);
         } else if (event instanceof TaskSummaryResponse) {
             handleTaskSummaryResponse((TaskSummaryResponse)event);
@@ -307,9 +306,9 @@ public class Registry implements Node {
 
     private void handleTaskComplete(String hostname, int port) {
         String nodeIdentifier = hostname + ":" + port;
-
+    debug_print("Task completion reported by " + nodeIdentifier +"----------------------------------");
         if (registeredNodes.containsKey(nodeIdentifier)) {
-            completedNodes.add(nodeIdentifier);
+            completedNodes.add(normalizeHostnameToFQDN(nodeIdentifier));
             debug_print("Task completion reported by " + nodeIdentifier);
 
             if (completedNodes.size() == registeredNodes.size()) {
