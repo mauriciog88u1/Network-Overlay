@@ -203,6 +203,7 @@ public class MessagingNode implements Node {
                 computeAndCacheShortestPath(destination);
                 path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             }
+            path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
             if (path != null && !path.isEmpty()) {
                 DEBUG.debug_print("Sending message to next hop...");
                 path.remove(0);
@@ -216,6 +217,9 @@ public class MessagingNode implements Node {
                         sendMessageToNextHop(nextHopIdentifier, message);
                     }
                 }
+            }
+            if (path == null || path.isEmpty()) {
+                DEBUG.debug_print("Path is STILL EMPTY");
             }
         }
         System.out.println("Finished Rounds "+ event.getRounds());
