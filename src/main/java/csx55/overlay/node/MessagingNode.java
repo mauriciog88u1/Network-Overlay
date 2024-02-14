@@ -145,12 +145,10 @@ public class MessagingNode implements Node {
     
         Random random = new Random();
     
-        for (int i = 0; i < event.getRounds(); i++) {
-            DEBUG.debug_print(networkTopology.toString());
-    
+        for (int i = 0; i < event.getRounds(); i++) {    
             if (networkTopology.isEmpty()) {
                 debug_print("Network topology is empty. Cannot select a destination.");
-                continue; // Skip this iteration as there's no destination to select
+                continue;
             }
     
             String destination = networkTopology.keySet().stream()
@@ -182,7 +180,6 @@ public class MessagingNode implements Node {
                     Message message = new Message(path, payload);
                     debug_print("Sending message to next hop: " + nextHopIdentifier);
                     sendMessageToNextHop(nextHopIdentifier, message);
-                    sendTracker.incrementAndGet();
                 }
             }
         }
@@ -199,6 +196,7 @@ public class MessagingNode implements Node {
             Socket socket = new Socket(hostname, port);
             TCPSender sender = new TCPSender(socket);
             sender.sendMessage(message.getBytes());
+            sendTracker.incrementAndGet();
         } catch (IOException e) {
             debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
         }
@@ -207,10 +205,6 @@ public class MessagingNode implements Node {
 
     private void handleLinkWeights(LinkWeights event) {
         event.getLinkweights().forEach((link, weight) -> {
-           System.out.println("-----------------------------------------------------------------------------------------------------------");
-           System.out.println("Link: " + link + " Weight: " + weight);
-           System.out.println("event is: " + event.getLinkweights());
-              System.out.println("-----------------------------------------------------------------------------------------------------------");
             String[] parts = link.split("@"); 
             System.out.println();
             debug_print("We are getting link " + link + " and parts " + Arrays.toString(parts));
@@ -329,9 +323,39 @@ public class MessagingNode implements Node {
     }
 
     private void printShortestPath() {
-        debug_print("Current networkTopology: " + networkTopology);
-        routingCache.printCache(networkTopology);
+        String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
+        debug_print("Printing shortest paths from: " + source);
+        
+        ShortestPath shortestPathCalculator = new ShortestPath();
+        networkTopology.keySet().forEach(destination -> {
+            if (!destination.equals(source)) { // Avoid calculating path to itself
+                List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
+                if (path != null && !path.isEmpty()) {
+                    StringBuilder pathStr = new StringBuilder();
+                    Iterator<String> pathIterator = path.iterator();
+                    String prevNode = pathIterator.next();
+                    pathStr.append(prevNode);
+                    
+                    while (pathIterator.hasNext()) {
+                        String currentNode = pathIterator.next();
+                        Integer weight = networkTopology.get(prevNode).get(currentNode);
+                        if (weight != null) {
+                            pathStr.append("--").append(weight).append("--").append(currentNode);
+                        } else {
+                            debug_print("Error: Missing weight from " + prevNode + " to " + currentNode);
+                            pathStr.append("--NULL--").append(currentNode);
+                        }
+                        prevNode = currentNode;
+                    }
+                    
+                    System.out.println(pathStr.toString());
+                } else {
+                    debug_print("No path found from " + source + " to " + destination);
+                }
+            }
+        });
     }
+    
 
 
         private String normalizeHostnameToFQDN(String hostPort) {

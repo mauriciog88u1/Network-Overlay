@@ -29,6 +29,7 @@ public class Registry implements Node {
     private String hostname;
     private String ip;
     private Map<String, Integer> linkWeightsMap;
+    private int number_of_rounds =3;
 
 
     public Registry(int serverPort) {
@@ -92,7 +93,7 @@ public class Registry implements Node {
                 sendOverlayLinkWeights();
                 break;
             case "start-number-of-rounds":
-                startMessageSending(Integer.parseInt(tokens[1]));
+                startMessageSending(number_of_rounds);
                 break;
             default:
                 String usage = "Usage: list-messaging-nodes | list-weights | setup-overlay <number-of-connections> | send-overlay-link-weights";

@@ -10,7 +10,7 @@ cd /s/chopin/n/under/maur88/cs455/hw1/HW1_ATTEMPT_2
 tmux new-session -d -s "ssh_sessions"
 
 # Define the command to be executed on each machine
-command="/usr/bin/env /usr/lib/jvm/java-11-openjdk-11.0.21.0.9-2.el8.x86_64/bin/java -cp /s/chopin/n/under/maur88/cs455/hw1/HW1_ATTEMPT_2/build/resources/main:/s/chopin/n/under/maur88/cs455/hw1/HW1_ATTEMPT_2/build/classes/java/main csx55.overlay.node.MessagingNode sardine 1024 --DEBUG"
+command="/usr/bin/env /usr/lib/jvm/java-11-openjdk-11.0.21.0.9-2.el8.x86_64/bin/java -cp /s/chopin/n/under/maur88/cs455/hw1/HW1_ATTEMPT_2/build/resources/main:/s/chopin/n/under/maur88/cs455/hw1/HW1_ATTEMPT_2/build/classes/java/main csx55.overlay.node.MessagingNode sardine 1024"
 
 # Define the list of machines
 machines=("bogota" "breckenridge" "buttermilk" "cooper" "copper-mtn" "crested-butte" "eldora" "keystone" "monarch" "steamboat")
