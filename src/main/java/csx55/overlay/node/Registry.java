@@ -54,6 +54,7 @@ public class Registry implements Node {
 
     public void start() {
         debug_print("Starting Registry server thread on hostname: " + hostname + ", ip: " + ip + ", port: " + serverPort);
+        System.out.println("Registry started on " + hostname + ":" + serverPort );
         serverThread.start();
         listenForCommands();
     }
