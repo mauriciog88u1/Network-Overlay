@@ -143,8 +143,6 @@ public class MessagingNode implements Node {
         debug_print("Received traffic summary request. Sending summary.. " +event.getType());
         try {
             TaskSummaryResponse response = new TaskSummaryResponse(getIp(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
-            Socket socket = new Socket(registry_hostname, registry_port);
-            TCPSender sender = new TCPSender(socket);
             sender.sendMessage(response.getBytes());
             DEBUG.debug_print("Sending Traffic Summary for " + getHostname());
         } catch (IOException e) {
