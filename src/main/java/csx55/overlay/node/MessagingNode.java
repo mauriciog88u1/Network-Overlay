@@ -205,7 +205,7 @@ public class MessagingNode implements Node {
     }
 
     public void computeAndCacheShortestPath(String destination) {
-        String source = getHostname() + ":" + getPort();
+        String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
         debug_print("Attempting to find key in networkTopology: " + source);
         debug_print("Network topology keyset: " + networkTopology.keySet());
         if (networkTopology.isEmpty()) {
