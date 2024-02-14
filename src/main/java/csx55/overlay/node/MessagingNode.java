@@ -189,6 +189,7 @@ public class MessagingNode implements Node {
 
             List<String> path = ensurePathIsFound(destination);
             if (!path.isEmpty()) {
+                debug_print("Sending message to " + destination + " along path: " + path);
                 sendMessageAlongPath(path, random);
             } else {
                 debug_print("Failed to find path to " + destination);
