@@ -132,6 +132,7 @@ public class MessagingNode implements Node {
             break;
            case Protocol.PULL_TRAFFIC_SUMMARY:
             handlePullTrafficSummary((TaskSummaryRequest) event);
+            break;
 
         default:
             System.out.println("Unknown event type: " + event.getType());
