@@ -351,7 +351,6 @@ public class Registry implements Node {
     private void handleTaskSummaryResponse(TaskSummaryResponse taskSummaryResponse) {
         String nodeIdentifier = taskSummaryResponse.getNodeIP() + ":" + taskSummaryResponse.getNodePort();
 
-        if (registeredNodes.containsKey(nodeIdentifier)) {
             long sentSum = taskSummaryResponse.getSummationOfSentMessages();
             long receivedSum = taskSummaryResponse.getSummationOfReceivedMessages();
             int relayedMessages = taskSummaryResponse.getRelayedMessages();
@@ -361,9 +360,6 @@ public class Registry implements Node {
             if (statisticsCollector.size() == completedNodes.size()) {
                 statisticsCollector.displaySummary();
             }
-        } else {
-            debug_print("Received task summary response from an unregistered node: " + nodeIdentifier);
-        }
     }
     private String normalizeHostnameToFQDN(String hostPort) {
         try {
