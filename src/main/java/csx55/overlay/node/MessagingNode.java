@@ -204,13 +204,33 @@ public class MessagingNode implements Node {
         return keys.get(new Random().nextInt(keys.size()));
     }
 
+    public void computeAndCacheShortestPath(String destination) {
+        String source = getHostname() + ":" + getPort();
+        debug_print("Attempting to find source in networkTopology: " + source);
+        if (networkTopology.isEmpty()) {
+            debug_print("Network topology is empty.");
+            return;
+        }
+        if (!networkTopology.containsKey(source)) {
+            debug_print("Source node is missing in topology. Available keys: " + networkTopology.keySet());
+            return;
+        }
+
+        ShortestPath shortestPathCalculator = new ShortestPath();
+        List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
+        routingCache.addPath(source, destination, path);
+        debug_print("Added path to cache: " + source + "->" + destination + ": " + path);
+    }
+
     private List<String> ensurePathIsFound(String destination) {
         String source = getHostname() + ":" + getPort();
         List<String> path = routingCache.getPath(source, destination);
         if (path == null || path.isEmpty()) {
+            debug_print("Path not found in cache. Recomputing...");
             computeAndCacheShortestPath(destination);
             path = routingCache.getPath(source, destination);
         }
+        debug_print("Retrieved path from cache: " + source + "->" + destination + ": " + path);
         return path != null ? path : new ArrayList<>();
     }
 
@@ -267,22 +287,7 @@ public class MessagingNode implements Node {
         });
     }
 
-    public void computeAndCacheShortestPath(String destination) {
-        String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
-        debug_print("Attempting to find source in networkTopology: " + source);
-        if (networkTopology.isEmpty()) {
-            debug_print("Network topology is empty.");
-            return;
-        }
-        if (!networkTopology.containsKey(source)) {
-            debug_print("Source node is missing in topology. Available keys: " + networkTopology.keySet());
-            return;
-        }
 
-        ShortestPath shortestPathCalculator = new ShortestPath();
-        List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
-        routingCache.addPath(source, destination, path);
-    }
 
     // THis method is hanbdling the messaging nodes list by connecting to the nodes from the list per each node`
     private void handleMessagingNodesList(MessagingNodesList event) {
