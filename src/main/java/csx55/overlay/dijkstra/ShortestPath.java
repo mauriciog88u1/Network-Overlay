@@ -7,7 +7,7 @@ import java.util.*;
 public class ShortestPath {
 
     public List<String> computeShortestPath(Map<String, Map<String, Integer>> graph, String source, String sink) {
-        DEBUG.debug_print("Called computeShortestPath with graph: " + graph + " source: " + source + " sink: " + sink);
+        // DEBUG.debug_print("Called computeShortestPath with graph: " + graph + " source: " + source + " sink: " + sink); this works
         Set<String> settledNodes = new HashSet<>();
         Set<String> unsettledNodes = new HashSet<>();
         Map<String, Integer> distances = new HashMap<>();

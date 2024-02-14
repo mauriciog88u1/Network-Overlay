@@ -40,11 +40,19 @@ public class RoutingCache {
         StringBuilder pathStr = new StringBuilder(source);
         String prevNode = source;
         for (String node : path) {
-            Integer weight = networkTopology.get(prevNode).get(node);
-            pathStr.append("--").append(weight).append("--").append(node);
+            Map<String, Integer> connections = networkTopology.get(prevNode);
+            if (connections != null && connections.containsKey(node)) {
+                Integer weight = connections.get(node);
+                pathStr.append("--").append(weight).append("--").append(node);
+            } else {
+                // Log missing connection or incorrect weight
+                DEBUG.debug_print("Missing connection or weight from " + prevNode + " to " + node);
+                pathStr.append("--NULL--").append(node); // Indicates a problem in the path
+            }
             prevNode = node;
         }
         System.out.println(pathStr);
     }
+    
 
 }
