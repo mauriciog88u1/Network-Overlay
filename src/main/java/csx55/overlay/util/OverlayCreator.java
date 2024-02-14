@@ -28,7 +28,7 @@ public class OverlayCreator {
             }
             overlayMap.put(nodeKeys.get(i), connections);
         }
-this.overlayMap = overlayMap;
+            this.overlayMap = overlayMap;
 
         return overlayMap;
     }

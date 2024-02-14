@@ -304,18 +304,23 @@ public class Registry implements Node {
         if (nodeCopy.containsKey(key)) {
                 totalNodes--;
                 nodeCopy.remove(key);
+                debug_print(key + " removed from " + nodeCopy.keySet());
        
         } 
         if(totalNodes < 0){
-            //  Send task complete here 
+            TaskSummaryRequest taskSummaryRequest = new TaskSummaryRequest();
+            try {
+                byte[] message = taskSummaryRequest.getBytes();
+                for (NodeWrapper node : registeredNodes.values()) {
+                    TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
+                    sender.sendMessage(message);
+                    sender.closeConnection();
+                }
+                System.out.println("Sending Task Summary Request to all nodes.");
+            } catch (IOException e) {
+                System.err.println("Error in sending Summary Request " + e.getMessage());
+            }
         }
-        else {
-           debug_print(key +" not in " + listMessagingNodes());
-        }
-            
-    
-
-
     }
 
     @Override

@@ -130,11 +130,33 @@ public class MessagingNode implements Node {
         case Protocol.MESSAGE:
             handleReceivedMessage((Message) event);
             break;
+           case Protocol.PULL_TRAFFIC_SUMMARY:
+               handlePullTrafficSummary((TaskSummaryRequest) event);
 
         default:
             System.out.println("Unknown event type: " + event.getType());
             break;
        }
+    }
+
+    private void handlePullTrafficSummary(TaskSummaryRequest event) {
+        debug_print("Received traffic summary request. Sending summary.. " +event.getType());
+        try {
+            TaskSummaryResponse response = new TaskSummaryResponse(getIp(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
+            Socket socket = new Socket(registry_hostname, registry_port);
+            TCPSender sender = new TCPSender(socket);
+            sender.sendMessage(response.getBytes());
+            DEBUG.debug_print("Sending Traffic Summary for " + getHostname());
+        } catch (IOException e) {
+            System.out.println("Error sending traffic summary: " + e.getMessage());
+            System.exit(1);
+        }
+        finally {
+            debug_print(String.format("Resetting counters: counters old values : Sendsummation: %d recieveSum %d realytrack %d", sendSummation, receiveSummation, relayTracker));
+            sendSummation.set(0);
+            receiveSummation.set(0);
+            relayTracker.set(0);
+        }
     }
 
     private void handleReceivedMessage(Message event) {

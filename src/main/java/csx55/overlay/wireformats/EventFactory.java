@@ -44,10 +44,10 @@ public class EventFactory implements Protocol {
                 e = new TaskComplete(data);
                 break;
             case PULL_TRAFFIC_SUMMARY:
-                DEBUG.debug_print("Creating PullTrafficSummary");
+               e = new TaskSummaryRequest(data);
                 break;
             case TRAFFIC_SUMMARY:
-                DEBUG.debug_print("Creating TrafficSummary");
+                e = new TaskSummaryResponse(data);
                 break;
             case MESSAGE:
                 e = new Message(data);
