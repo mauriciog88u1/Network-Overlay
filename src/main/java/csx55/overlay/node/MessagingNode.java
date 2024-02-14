@@ -93,7 +93,7 @@ public class MessagingNode implements Node {
 
     private void registrationToRegistry() throws IOException {
         InetAddress localHost = InetAddress.getLocalHost();
-        Register register = new Register("10.84.16.168", "10.84.16.168", serverSocket.getLocalPort());
+        Register register = new Register(getHostname(), getIp(), serverSocket.getLocalPort());
         sender.sendMessage(register.getBytes());
         debug_print("Registration message sent to registry.");
     }
