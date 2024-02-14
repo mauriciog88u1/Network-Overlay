@@ -53,6 +53,27 @@ public class TaskSummaryResponse implements Event{
 
     }
 
+
+    public String getNodeIP() {
+        return nodeIP;
+    }
+
+    public int getNodePort() {
+        return nodePort;
+    }
+
+    public Long getSummationOfSentMessages() {
+        return SummationOfSentMessages;
+    }
+
+    public Long getSummationOfReceivedMessages() {
+        return SummationOfReceivedMessages;
+    }
+
+    public int getRelayedMessages() {
+        return relayedMessages;
+    }
+
     @Override
     public int getType() {
         return messageType;

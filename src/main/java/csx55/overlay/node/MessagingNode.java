@@ -131,7 +131,7 @@ public class MessagingNode implements Node {
             handleReceivedMessage((Message) event);
             break;
            case Protocol.PULL_TRAFFIC_SUMMARY:
-               handlePullTrafficSummary((TaskSummaryRequest) event);
+            handlePullTrafficSummary((TaskSummaryRequest) event);
 
         default:
             System.out.println("Unknown event type: " + event.getType());

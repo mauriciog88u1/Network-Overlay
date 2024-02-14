@@ -5,6 +5,7 @@ import csx55.overlay.transport.TCPServerThread;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.util.DEBUG;
+import csx55.overlay.util.StatisticsCollectorAndDisplay;
 import csx55.overlay.wireformats.*;
 
 import java.io.BufferedReader;
@@ -16,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,11 @@ public class Registry implements Node {
     private String hostname;
     private String ip;
     private Map<String, Integer> linkWeightsMap;
+    private final Set<String> completedNodes = ConcurrentHashMap.newKeySet();
+
+    private final StatisticsCollectorAndDisplay statisticsCollector = new StatisticsCollectorAndDisplay();
+
+
     private int number_of_rounds =3;
 
 
@@ -268,7 +275,6 @@ public class Registry implements Node {
     @Override
     public void onEvent(Event event) {
         debug_print("Registry received event of type: " + event.getType());
-        // Handling Register events
         if (event instanceof Register) {
             Register registerEvent = (Register) event;
             String ipAddress = registerEvent.getIpAddress();
@@ -285,43 +291,84 @@ public class Registry implements Node {
         }
         else if(event instanceof TaskComplete){
             TaskComplete complete = (TaskComplete) event;
-            String ipAddress = complete.getNodeIPAddress();
+            String ipAddress = normalizeHostnameToFQDN(complete.getNodeIPAddress());
             int portNum = complete.getNodePort();
             
            handleTaskComplete(ipAddress,portNum);
-        }
-        else {
+        } else if (event instanceof TaskSummaryResponse) {
+            handleTaskSummaryResponse((TaskSummaryResponse)event);
+
+
+        } else {
             System.err.println("Unknown event type: " + event.getType());
         }
     }
 
-    private void handleTaskComplete(String hostname, int port) {
-        debug_print("Calling handle Task complete with ");
-        String key = hostname + ":" + port;
-        int totalNodes = registeredNodes.size();
-        var nodeCopy = registeredNodes;
 
-        if (nodeCopy.containsKey(key)) {
-                totalNodes--;
-                nodeCopy.remove(key);
-                debug_print(key + " removed from " + nodeCopy.keySet());
-       
-        } 
-        if(totalNodes < 0){
-            TaskSummaryRequest taskSummaryRequest = new TaskSummaryRequest();
-            try {
-                byte[] message = taskSummaryRequest.getBytes();
-                for (NodeWrapper node : registeredNodes.values()) {
-                    TCPSender sender = new TCPSender(new Socket(node.getIp(), node.getPort()));
-                    sender.sendMessage(message);
-                    sender.closeConnection();
+    private void handleTaskComplete(String hostname, int port) {
+        String nodeIdentifier = hostname + ":" + port;
+
+        if (registeredNodes.containsKey(nodeIdentifier)) {
+            completedNodes.add(nodeIdentifier);
+            debug_print("Task completion reported by " + nodeIdentifier);
+
+            if (completedNodes.size() == registeredNodes.size()) {
+                try {
+                    sendTaskSummaryRequest();
+                } catch (IOException e) {
+                    System.err.println("Error sending Task Summary Request: " + e.getMessage());
                 }
-                System.out.println("Sending Task Summary Request to all nodes.");
-            } catch (IOException e) {
-                System.err.println("Error in sending Summary Request " + e.getMessage());
+            }
+        } else {
+            debug_print("Received task completion from an unregistered node: " + nodeIdentifier);
+        }
+    }
+
+
+    private void sendTaskSummaryRequest() throws IOException {
+        TaskSummaryRequest taskSummaryRequest = new TaskSummaryRequest();
+        byte[] message = taskSummaryRequest.getBytes();
+
+        for (NodeWrapper node : registeredNodes.values()) {
+            try {
+                Socket socket = new Socket(node.getIp(), node.getPort());
+                TCPSender sender = new TCPSender(socket);
+                sender.sendMessage(message);
+            }
+
+            catch (IOException e) {
+                System.err.println("Error sending Task Summary Request to " + node.getIp() + ":" + node.getPort() + ": " + e.getMessage());
             }
         }
-        
+    }
+    private void handleTaskSummaryResponse(TaskSummaryResponse taskSummaryResponse) {
+        String nodeIdentifier = taskSummaryResponse.getNodeIP() + ":" + taskSummaryResponse.getNodePort();
+
+        if (registeredNodes.containsKey(nodeIdentifier)) {
+            long sentSum = taskSummaryResponse.getSummationOfSentMessages();
+            long receivedSum = taskSummaryResponse.getSummationOfReceivedMessages();
+            int relayedMessages = taskSummaryResponse.getRelayedMessages();
+
+            statisticsCollector.addNodeStatistics(nodeIdentifier, sentSum, receivedSum, relayedMessages);
+
+            if (statisticsCollector.size() == completedNodes.size()) {
+                statisticsCollector.displaySummary();
+            }
+        } else {
+            debug_print("Received task summary response from an unregistered node: " + nodeIdentifier);
+        }
+    }
+    private String normalizeHostnameToFQDN(String hostPort) {
+        try {
+            String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort;
+            InetAddress addr = InetAddress.getByName(hostname);
+
+            String fqdn = addr.getCanonicalHostName();
+            return fqdn;
+        } catch (UnknownHostException e) {
+            debug_print("Failed to normalize hostname to FQDN: " + hostPort + ", error: " + e.getMessage());
+            return hostPort;
+        }
     }
 
     @Override
