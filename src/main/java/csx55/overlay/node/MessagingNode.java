@@ -149,8 +149,7 @@ public class MessagingNode implements Node {
             System.out.println("Error sending traffic summary: " + e.getMessage());
             System.exit(1);
         } finally {
-            debug_print(String.format("Resetting counters: counters old values : Sendsummation: %d, receiveSummation: %d, relayTrack: %d",
-                    sendSummation.get(), receiveSummation.get(), relayTracker.get()));
+            debug_print(String.format("Resetting counters: counters old values : Sendsummation: %d, receiveSummation: %d, relayTrack: %d", sendSummation.get(), receiveSummation.get(), relayTracker.get()));
             sendSummation.set(0);
             receiveSummation.set(0);
             relayTracker.set(0);
