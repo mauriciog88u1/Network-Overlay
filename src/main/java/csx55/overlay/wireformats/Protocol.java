@@ -24,7 +24,7 @@ public final int TRAFFIC_SUMMARY = 10;
 
 
 
-public final int MESSAGE = 13;
+public final int MESSAGE = 11;
 
 
 

@@ -236,6 +236,7 @@ public class MessagingNode implements Node {
         DEBUG.debug_print("Sending message to next hop: " + nextHopIdentifier);
         DEBUG.debug_print("Message: " + message.getPayload());
         sendSummation.addAndGet(message.getPayload());
+        System.out.println("Send Summation: " + sendSummation.get());
         String[] parts = nextHopIdentifier.split(":");
         String hostname = parts[0];
         int port = Integer.parseInt(parts[1]);
