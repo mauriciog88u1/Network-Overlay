@@ -114,33 +114,33 @@ public class MessagingNode implements Node {
 
     @Override
     public void onEvent(Event event) {
-       switch (event.getType()) {
-        case Protocol.REGISTER_RESPONSE:
-            handleRegisterResponse((RegisterResponse) event);
-            break;
-        case Protocol.MESSAGING_NODES_LIST:
-            handleMessagingNodesList((MessagingNodesList) event);
-            break;
-        case Protocol.LINK_WEIGHTS:
-            handleLinkWeights((LinkWeights) event);
-            break;
-        case Protocol.TASK_INITIATE:
-            handleTaskInitiate((TaskInitiate) event);
-            break;
-        case Protocol.MESSAGE:
-            handleReceivedMessage((Message) event);
-            break;
-           case Protocol.PULL_TRAFFIC_SUMMARY:
-            handlePullTrafficSummary((TaskSummaryRequest) event);
-            break;
+        switch (event.getType()) {
+            case Protocol.REGISTER_RESPONSE:
+                handleRegisterResponse((RegisterResponse) event);
+                break;
+            case Protocol.MESSAGING_NODES_LIST:
+                handleMessagingNodesList((MessagingNodesList) event);
+                break;
+            case Protocol.LINK_WEIGHTS:
+                handleLinkWeights((LinkWeights) event);
+                break;
+            case Protocol.TASK_INITIATE:
+                handleTaskInitiate((TaskInitiate) event);
+                break;
+            case Protocol.MESSAGE:
+                handleReceivedMessage((Message) event);
+                break;
+            case Protocol.PULL_TRAFFIC_SUMMARY:
+                handlePullTrafficSummary((TaskSummaryRequest) event);
+                break;
 
-        default:
-            System.out.println("Unknown event type: " + event.getType());
-            break;
-       }
+            default:
+                System.out.println("Unknown event type: " + event.getType());
+                break;
+        }
     }
 
-    private void handlePullTrafficSummary(TaskSummaryRequest event) {
+    private synchronized void handlePullTrafficSummary(TaskSummaryRequest event) {
         debug_print("Received traffic summary request. Sending summary.. " + event.getType());
         try {
             TaskSummaryResponse response = new TaskSummaryResponse(getHostname(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
@@ -158,7 +158,7 @@ public class MessagingNode implements Node {
     }
 
 
-    private void handleReceivedMessage(Message event) {
+    private synchronized void handleReceivedMessage(Message event) {
         debug_print("[DEBUG]Received message: " + event.getPayload() + " from " + event.getRroutingTable().get(0));
         receiveTracker.incrementAndGet();
         if (event.getRroutingTable().size() > 1) {
@@ -173,107 +173,41 @@ public class MessagingNode implements Node {
         }
     }
 
-    private void handleTaskInitiate(TaskInitiate event) {
-        DEBUG.debug_print("Received task initiate event: " + event.getRounds());
-    
+    private synchronized void handleTaskInitiate(TaskInitiate event) {
         Random random = new Random();
-    
-        for (int i = 0; i < event.getRounds(); i++) {    
+        for (int i = 0; i < event.getRounds(); i++) {
             if (networkTopology.isEmpty()) {
                 debug_print("Network topology is empty. Cannot select a destination.");
                 continue;
             }
-    
-            String destination = networkTopology.keySet().stream() // this will get a random destination in the map and then optimze the route to it
-                                  .skip(random.nextInt(networkTopology.size()))
-                                  .findFirst()
-                                  .orElse(null);
-    
+
+            String destination = selectRandomDestination();
             if (destination == null) {
                 debug_print("Failed to select a destination. Skipping this round.");
-                continue; // Skip this iteration as no destination was selected
+                continue;
             }
-    
-            debug_print("Destination is: " + destination);
-            List<String> path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
-            DEBUG.debug_print("Path to " + destination + ": " + path);
-    
-            if (path == null) {
-                DEBUG.debug_print("Path not found in cache. Computing and caching...");
-                computeAndCacheShortestPath(destination);
-                path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
-            }
-            path = routingCache.getPath(this.getHostname() + ":" + this.getPort(), destination);
-            if (path != null && !path.isEmpty()) {
-                DEBUG.debug_print("Sending message to next hop...");
-                path.remove(0);
-                if (!path.isEmpty()) {
-                    DEBUG.debug_print("Path not empty. Next hop is: " + path.get(0) + ". Sending message.");
-                    String nextHopIdentifier = path.get(0);
-                    int payload = random.nextInt();
-                    Message message = new Message(path, payload);
-                    debug_print("Sending message to next hop: " + nextHopIdentifier);
-                    for (int j =0; j < 5; j++) { // send the message 5 times per instrctuons and canvas message
-                        sendMessageToNextHop(nextHopIdentifier, message);
-                    }
-                }
-            }
-            if (path == null || path.isEmpty()) {
-                DEBUG.debug_print("Path is STILL EMPTY");
+            computeAndCacheShortestPath(destination);
+            List<String> path = ensurePathIsFound(destination);
+            if (!path.isEmpty()) {
+                debug_print("Sending message to " + destination + " along path: " + path);
+                sendMessageAlongPath(path, random);
+            } else {
+                debug_print("Failed to find path to " + destination);
             }
         }
-        System.out.println("Finished Rounds "+ event.getRounds());
-        
-        try{
-
-        TaskComplete complete = new TaskComplete(getHostname(), getPort());
-        sender.sendMessage(complete.getBytes());
-        DEBUG.debug_print("Sending Complete for " + getHostname());
-        }
-        catch(Exception e){
-            DEBUG.debug_print(e.getMessage());
-        }
-
-    }
-    
-    private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
-        DEBUG.debug_print("Sending message to next hop: " + nextHopIdentifier);
-        DEBUG.debug_print("Message: " + message.getPayload());
-        sendSummation.addAndGet(message.getPayload());
-        System.out.println("Send Summation: " + sendSummation.get());
-        String[] parts = nextHopIdentifier.split(":");
-        String hostname = parts[0];
-        int port = Integer.parseInt(parts[1]);
-        
-        try {
-            Socket socket = new Socket(hostname, port);
-            TCPSender sender = new TCPSender(socket);
-            sendTracker.incrementAndGet();
-            sender.sendMessage(message.getBytes());
-        } catch (IOException e) {
-            debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
-        }
+        sendTaskComplete();
     }
 
-
-    private void handleLinkWeights(LinkWeights event) {
-        event.getLinkweights().forEach((link, weight) -> {
-            String[] parts = link.split("@"); 
-            System.out.println();
-//            debug_print("We are getting link " + link + " and parts " + Arrays.toString(parts));
-            //  change parts instead of - because hostnames can contain -
-//            debug_print("Parts: " + Arrays.toString(parts));
-            String node1 = parts[0];
-            String node2 = parts[1];
-            Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
-            connections.put(node2, weight);
-            networkTopology.put(node1, connections);
-        });
+    private String selectRandomDestination() {
+        List<String> keys = new ArrayList<>(networkTopology.keySet());
+        if (keys.isEmpty()) return null;
+        return keys.get(new Random().nextInt(keys.size()));
     }
 
-    public void computeAndCacheShortestPath(String destination) {
+    public synchronized void computeAndCacheShortestPath(String destination) {
         String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
-        debug_print("Attempting to find source in networkTopology: " + source);
+        debug_print("Attempting to find key in networkTopology: " + source);
+        debug_print("Network topology keyset: " + networkTopology.keySet());
         if (networkTopology.isEmpty()) {
             debug_print("Network topology is empty.");
             return;
@@ -286,37 +220,99 @@ public class MessagingNode implements Node {
         ShortestPath shortestPathCalculator = new ShortestPath();
         List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
         routingCache.addPath(source, destination, path);
+        debug_print("Added path to cache: " + source + "->" + destination + ": " + path);
     }
 
-    // THis method is hanbdling the messaging nodes list by connecting to the nodes from the list per each node`
-    private void handleMessagingNodesList(MessagingNodesList event) {
-    List<String> messagingNodesInfo = event.getMessagingNodesInfo();
-
-    if (messagingNodesInfo.isEmpty()) {
-        debug_print("No peer messaging nodes to connect to.");
-        return;
+    private List<String> ensurePathIsFound(String destination) {
+        String source = getHostname() + ":" + getPort();
+        ShortestPath shortestPathCalculator = new ShortestPath();
+        List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
+        debug_print("Computed path: " + source + "->" + destination + ": " + path);
+        return path != null ? path : new ArrayList<>();
     }
 
-    AtomicInteger connectionCount = new AtomicInteger(0);
-    for (String nodeInfo : messagingNodesInfo) {
-        String[] parts = nodeInfo.split(":");
-        String hostname = parts[0];
-        int port = Integer.parseInt(parts[1]);
-
-        try {
-            Socket socket = new Socket(hostname, port);
-            new TCPReceiverThread(socket, this).start();
-            connectionCount.incrementAndGet();
-            debug_print("Connected to peer messaging node: " + nodeInfo);
-        } catch (IOException e) {
-            debug_print("Failed to connect to peer messaging node: " + nodeInfo);
+    private void sendMessageAlongPath(List<String> path, Random random) {
+        String nextHopIdentifier = path.get(0);
+        int payload = random.nextInt();
+        Message message = new Message(new ArrayList<>(path.subList(1, path.size())), payload);
+        for (int j = 0; j < 5; j++) {
+            sendMessageToNextHop(nextHopIdentifier, message);
         }
     }
 
-    debug_print("All connections are established. Number of connections: " + connectionCount);
-}
+    private void sendTaskComplete() {
+        TaskComplete taskComplete = new TaskComplete(getHostname(), getPort());
+        try {
+            sender.sendMessage(taskComplete.getBytes());
+        } catch (IOException e) {
+            debug_print("Error sending task complete message: " + e.getMessage());
+        }
+    }
 
-    private void handleRegisterResponse(RegisterResponse response) {
+    private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
+        debug_print("Sending message to next hop: " + nextHopIdentifier);
+        String[] parts = nextHopIdentifier.split(":");
+        String hostname = parts[0];
+        int port = Integer.parseInt(parts[1]);
+
+        sendTracker.incrementAndGet();
+        sendSummation.addAndGet(message.getPayload());
+
+        try (Socket socket = new Socket(hostname, port)) {
+            TCPSender sender = new TCPSender(socket);
+            sender.sendMessage(message.getBytes());
+
+        } catch (IOException e) {
+            debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
+        }
+    }
+
+
+
+
+    private synchronized void handleLinkWeights(LinkWeights event) {
+        event.getLinkweights().forEach((link, weight) -> {
+            String[] parts = link.split("@");
+            System.out.println();
+            String node1 = parts[0];
+            String node2 = parts[1];
+            Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
+            connections.put(node2, weight);
+            networkTopology.put(node1, connections);
+        });
+    }
+
+
+
+    // THis method is hanbdling the messaging nodes list by connecting to the nodes from the list per each node`
+    private synchronized void handleMessagingNodesList(MessagingNodesList event) {
+        List<String> messagingNodesInfo = event.getMessagingNodesInfo();
+
+        if (messagingNodesInfo.isEmpty()) {
+            debug_print("No peer messaging nodes to connect to.");
+            return;
+        }
+
+        AtomicInteger connectionCount = new AtomicInteger(0);
+        for (String nodeInfo : messagingNodesInfo) {
+            String[] parts = nodeInfo.split(":");
+            String hostname = parts[0];
+            int port = Integer.parseInt(parts[1]);
+
+            try {
+                Socket socket = new Socket(hostname, port);
+                new TCPReceiverThread(socket, this).start();
+                connectionCount.incrementAndGet();
+                debug_print("Connected to peer messaging node: " + nodeInfo);
+            } catch (IOException e) {
+                debug_print("Failed to connect to peer messaging node: " + nodeInfo);
+            }
+        }
+
+        debug_print("All connections are established. Number of connections: " + connectionCount);
+    }
+
+    private synchronized void handleRegisterResponse(RegisterResponse response) {
         if (response.getStatusCode() == 1) {
             debug_print("Registration successful: " + response.getAdditionalInfo());
         } else {
@@ -352,22 +348,22 @@ public class MessagingNode implements Node {
         new TCPReceiverThread(clientSocket, this).start();
     }
     private void processCommand(String command) {
-                switch (command) {
-                    case "print-shortest-path":
-                        printShortestPath();
-                        break;
-                    case "exit-overlay":
-                        exitOverlay();
-                        break;
-                    default:
-                        DEBUG.debug_print("Unknown command: " + command);
-                        String usage = "Usage: print-shortest-path | exit-overlay";
-                        System.out.println(usage);
-                }
-
-
-
+        switch (command) {
+            case "print-shortest-path":
+                printShortestPath();
+                break;
+            case "exit-overlay":
+                exitOverlay();
+                break;
+            default:
+                DEBUG.debug_print("Unknown command: " + command);
+                String usage = "Usage: print-shortest-path | exit-overlay";
+                System.out.println(usage);
         }
+
+
+
+    }
 
     private void exitOverlay() {
         debug_print("Exiting overlay... for node " + getHostname());
@@ -378,7 +374,7 @@ public class MessagingNode implements Node {
     private void printShortestPath() {
         String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
         debug_print("Printing shortest paths from: " + source);
-        
+
         ShortestPath shortestPathCalculator = new ShortestPath();
         networkTopology.keySet().forEach(destination -> {
             if (!destination.equals(source)) { // Avoid calculating path to itself
@@ -388,7 +384,7 @@ public class MessagingNode implements Node {
                     Iterator<String> pathIterator = path.iterator();
                     String prevNode = pathIterator.next();
                     pathStr.append(prevNode);
-                    
+
                     while (pathIterator.hasNext()) {
                         String currentNode = pathIterator.next();
                         Integer weight = networkTopology.get(prevNode).get(currentNode);
@@ -400,7 +396,7 @@ public class MessagingNode implements Node {
                         }
                         prevNode = currentNode;
                     }
-                    
+
                     System.out.println(pathStr.toString());
                 } else {
                     debug_print("No path found from " + source + " to " + destination);
@@ -408,26 +404,26 @@ public class MessagingNode implements Node {
             }
         });
     }
-    
 
 
-        private String normalizeHostnameToFQDN(String hostPort) {
-            try {
-                String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort; 
-                InetAddress addr = InetAddress.getByName(hostname);
-         
-                String fqdn = addr.getCanonicalHostName();
-                return fqdn;
-            } catch (UnknownHostException e) {
-                debug_print("Failed to normalize hostname to FQDN: " + hostPort + ", error: " + e.getMessage());
-                return hostPort;
-            }
+
+    private String normalizeHostnameToFQDN(String hostPort) {
+        try {
+            String hostname = hostPort.contains(":") ? hostPort.substring(0, hostPort.indexOf(":")) : hostPort;
+            InetAddress addr = InetAddress.getByName(hostname);
+
+            String fqdn = addr.getCanonicalHostName();
+            return fqdn;
+        } catch (UnknownHostException e) {
+            debug_print("Failed to normalize hostname to FQDN: " + hostPort + ", error: " + e.getMessage());
+            return hostPort;
         }
+    }
 
-   
+
     public static void main(String[] args) {
 
-	System.out.println("NEW VERISION CHECKING IF IT UPDATEd");
+        System.out.println("NEW VERISION CHECKING IF IT UPDATEd");
         if (args.length != 2 && args.length != 3) {
             System.out.println("Usage: java MessagingNode <registry host> <registry port> [--DEBUG]");
             return;

@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RoutingCache {
-    private Map<String, List<String>> cache;
+    private final ConcurrentHashMap<String, List<String>> cache;
 
     public RoutingCache() {
-        cache = new HashMap<>();
+        cache = new ConcurrentHashMap<>();
     }
 
     public List<String> getPath(String source, String sink) {
