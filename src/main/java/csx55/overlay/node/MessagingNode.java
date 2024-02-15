@@ -225,13 +225,9 @@ public class MessagingNode implements Node {
 
     private List<String> ensurePathIsFound(String destination) {
         String source = getHostname() + ":" + getPort();
-        List<String> path = routingCache.getPath(source, destination);
-        if (path == null || path.isEmpty()) {
-            debug_print("Path not found in cache. Recomputing...");
-            computeAndCacheShortestPath(destination);
-            path = routingCache.getPath(source, destination);
-        }
-        debug_print("Retrieved path from cache: " + source + "->" + destination + ": " + path);
+        ShortestPath shortestPathCalculator = new ShortestPath();
+        List<String> path = shortestPathCalculator.computeShortestPath(networkTopology, source, destination);
+        debug_print("Computed path: " + source + "->" + destination + ": " + path);
         return path != null ? path : new ArrayList<>();
     }
 
@@ -254,20 +250,18 @@ public class MessagingNode implements Node {
     }
 
     private void sendMessageToNextHop(String nextHopIdentifier, Message message) {
+        debug_print("Sending message to next hop: " + nextHopIdentifier);
         String[] parts = nextHopIdentifier.split(":");
         String hostname = parts[0];
         int port = Integer.parseInt(parts[1]);
 
-        // Move the increment outside of the try block to ensure it's always counted,
-        // even in case of a failure to send the message.
         sendTracker.incrementAndGet();
         sendSummation.addAndGet(message.getPayload());
 
         try (Socket socket = new Socket(hostname, port)) {
             TCPSender sender = new TCPSender(socket);
             sender.sendMessage(message.getBytes());
-            // Moved increment operations above to ensure atomicity and consistency
-            // even when an exception is thrown.
+
         } catch (IOException e) {
             debug_print("Failed to send message to " + nextHopIdentifier + ": " + e.getMessage());
         }
