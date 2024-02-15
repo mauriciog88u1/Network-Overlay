@@ -22,3 +22,10 @@ java MessagingNode <registry host> <registry port> [--DebugMode]
 java Registry <port> [--DebugMode]
 Keep in mind I used VScode to run the application, so the command may vary depending on the IDE used.
 ```
+
+Here is my contribution graph on github
+
+<img width="947" alt="Screenshot 2024-02-14 at 5 30 20 PM" src="https://github.com/mauriciog88u1/HW1_ATTEMPT_2/assets/83040257/af8e51a9-b6ac-48ff-84c5-59d281cbefb5">
+
+
+
