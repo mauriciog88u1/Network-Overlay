@@ -140,7 +140,7 @@ public class MessagingNode implements Node {
         }
     }
 
-    private void handlePullTrafficSummary(TaskSummaryRequest event) {
+    private synchronized void handlePullTrafficSummary(TaskSummaryRequest event) {
         debug_print("Received traffic summary request. Sending summary.. " + event.getType());
         try {
             TaskSummaryResponse response = new TaskSummaryResponse(getHostname(), getPort(), sendSummation.get(), receiveSummation.get(), relayTracker.get());
@@ -158,7 +158,7 @@ public class MessagingNode implements Node {
     }
 
 
-    private void handleReceivedMessage(Message event) {
+    private synchronized void handleReceivedMessage(Message event) {
         debug_print("[DEBUG]Received message: " + event.getPayload() + " from " + event.getRroutingTable().get(0));
         receiveTracker.incrementAndGet();
         if (event.getRroutingTable().size() > 1) {
@@ -173,7 +173,7 @@ public class MessagingNode implements Node {
         }
     }
 
-    private void handleTaskInitiate(TaskInitiate event) {
+    private synchronized void handleTaskInitiate(TaskInitiate event) {
         Random random = new Random();
         for (int i = 0; i < event.getRounds(); i++) {
             if (networkTopology.isEmpty()) {
@@ -186,7 +186,7 @@ public class MessagingNode implements Node {
                 debug_print("Failed to select a destination. Skipping this round.");
                 continue;
             }
-
+            computeAndCacheShortestPath(destination);
             List<String> path = ensurePathIsFound(destination);
             if (!path.isEmpty()) {
                 debug_print("Sending message to " + destination + " along path: " + path);
@@ -204,7 +204,7 @@ public class MessagingNode implements Node {
         return keys.get(new Random().nextInt(keys.size()));
     }
 
-    public void computeAndCacheShortestPath(String destination) {
+    public synchronized void computeAndCacheShortestPath(String destination) {
         String source = normalizeHostnameToFQDN(getHostname()) + ":" + getPort();
         debug_print("Attempting to find key in networkTopology: " + source);
         debug_print("Network topology keyset: " + networkTopology.keySet());
@@ -270,7 +270,7 @@ public class MessagingNode implements Node {
 
 
 
-    private void handleLinkWeights(LinkWeights event) {
+    private synchronized void handleLinkWeights(LinkWeights event) {
         event.getLinkweights().forEach((link, weight) -> {
             String[] parts = link.split("@");
             System.out.println();
@@ -285,7 +285,7 @@ public class MessagingNode implements Node {
 
 
     // THis method is hanbdling the messaging nodes list by connecting to the nodes from the list per each node`
-    private void handleMessagingNodesList(MessagingNodesList event) {
+    private synchronized void handleMessagingNodesList(MessagingNodesList event) {
         List<String> messagingNodesInfo = event.getMessagingNodesInfo();
 
         if (messagingNodesInfo.isEmpty()) {
@@ -312,7 +312,7 @@ public class MessagingNode implements Node {
         debug_print("All connections are established. Number of connections: " + connectionCount);
     }
 
-    private void handleRegisterResponse(RegisterResponse response) {
+    private synchronized void handleRegisterResponse(RegisterResponse response) {
         if (response.getStatusCode() == 1) {
             debug_print("Registration successful: " + response.getAdditionalInfo());
         } else {
