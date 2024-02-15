@@ -69,7 +69,6 @@ public class Registry implements Node {
 
     private void listenForCommands() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Registry listening for commands...");
         String command;
         try {
             while ((command = reader.readLine()) != null) {
@@ -175,7 +174,6 @@ public class Registry implements Node {
         }
         linkWeights.generateLinkWeights(overlay);
         this.linkWeightsMap = linkWeights.getLinkweights();
-        System.out.println(linkWeights.toString());
     
         try {
             byte[] message = linkWeights.getBytes();
@@ -209,8 +207,7 @@ public class Registry implements Node {
             NodeWrapper newNode = new NodeWrapper(hostname, ip, port);
             registeredNodes.put(key, newNode);
             debug_print("Node registered: " + newNode);
-            sendRegisterResponse(newNode, true, "Registration request\n" +
-                    "successful. The number of messaging nodes currently constituting the overlay is (" + registeredNodes.size() + ")");
+            sendRegisterResponse(newNode, true, "Registration request successful. The number of messaging nodes currently constituting the overlay is (" + registeredNodes.size() + ")");
         } else {
             debug_print("Attempt to register already registered node: " + key);
             sendRegisterResponse(null, false, "Node already registered.");

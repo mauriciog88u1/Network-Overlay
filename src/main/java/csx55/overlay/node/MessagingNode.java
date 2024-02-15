@@ -280,6 +280,7 @@ public class MessagingNode implements Node {
             connections.put(node2, weight);
             networkTopology.put(node1, connections);
         });
+        System.out.println("Link weights are received and processed. Ready to send messages.");
     }
 
 
@@ -309,11 +310,12 @@ public class MessagingNode implements Node {
             }
         }
 
-        debug_print("All connections are established. Number of connections: " + connectionCount);
+        System.out.println(("All connections are established. Number of connections: " + connectionCount));
     }
 
     private synchronized void handleRegisterResponse(RegisterResponse response) {
         if (response.getStatusCode() == 1) {
+            System.out.println(response.getAdditionalInfo());
             debug_print("Registration successful: " + response.getAdditionalInfo());
         } else {
             debug_print("Registration failed: " + response.getAdditionalInfo());
@@ -423,7 +425,6 @@ public class MessagingNode implements Node {
 
     public static void main(String[] args) {
 
-        System.out.println("NEW VERISION CHECKING IF IT UPDATEd");
         if (args.length != 2 && args.length != 3) {
             System.out.println("Usage: java MessagingNode <registry host> <registry port> [--DEBUG]");
             return;
