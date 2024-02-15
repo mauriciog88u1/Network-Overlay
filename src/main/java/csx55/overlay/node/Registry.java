@@ -350,12 +350,13 @@ public class Registry implements Node {
     }
     private void handleTaskSummaryResponse(TaskSummaryResponse taskSummaryResponse) {
         String nodeIdentifier = taskSummaryResponse.getNodeIP() + ":" + taskSummaryResponse.getNodePort();
-
+            int sendMessages =taskSummaryResponse.getSentMessages();
+            int receivedMessages = taskSummaryResponse.getReceivedMessages();
             long sentSum = taskSummaryResponse.getSummationOfSentMessages();
             long receivedSum = taskSummaryResponse.getSummationOfReceivedMessages();
             int relayedMessages = taskSummaryResponse.getRelayedMessages();
 
-            statisticsCollector.addNodeStatistics(nodeIdentifier, sentSum, receivedSum, relayedMessages);
+            statisticsCollector.addNodeStatistics(nodeIdentifier, sentSum, receivedSum, relayedMessages,sendMessages,receivedMessages);
 
             if (statisticsCollector.size() == completedNodes.size()) {
                 statisticsCollector.displaySummary();
