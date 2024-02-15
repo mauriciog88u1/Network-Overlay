@@ -273,7 +273,6 @@ public class MessagingNode implements Node {
     private synchronized void handleLinkWeights(LinkWeights event) {
         event.getLinkweights().forEach((link, weight) -> {
             String[] parts = link.split("@");
-            System.out.println();
             String node1 = parts[0];
             String node2 = parts[1];
             Map<String, Integer> connections = networkTopology.getOrDefault(node1, new HashMap<>());
