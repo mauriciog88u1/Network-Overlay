@@ -58,13 +58,13 @@ public class ShortestPath {
         if (sourceDistance + edgeWeight < distances.getOrDefault(evaluationNode, Integer.MAX_VALUE)) {
             distances.put(evaluationNode, sourceDistance + edgeWeight);
             predecessors.put(evaluationNode, sourceNode);
-            DEBUG.debug_print("Updated distance for node: " + evaluationNode);
+//            DEBUG.debug_print("Updated distance for node: " + evaluationNode);
         }
     }
 
     private List<String> getPath(Map<String, String> predecessors, String sink) {
         LinkedList<String> path = new LinkedList<>();
-        DEBUG.debug_print("Getting path to sink: " + sink);
+//        DEBUG.debug_print("Getting path to sink: " + sink);
         String step = sink;
         if (predecessors.get(step) == null) {
             return path;
