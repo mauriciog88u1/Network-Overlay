@@ -26,7 +26,7 @@ public class StatisticsCollectorAndDisplay {
     }
 
     public synchronized void displaySummary() {
-        System.out.printf("%-20s %-20s %-20s %-20s%n", "Node", "Number of messages sent","Number of messages received","Summation of sent messages","Summation of received messages", "Received Sum", "Number of messages relayed");
+        System.out.printf("%-20s %-20s %-20s %-20s%n", "|Node", " |Number of messages sent |","Number of messages received|","Summation of sent messages|","Summation of received messages|", "Received Sum|", "Number of messages relayed|");
         statistics.forEach((nodeIdentifier, stats) ->
                 System.out.printf("%-20s %-20d %-20d %-20d%n", nodeIdentifier, stats.sendMessages, stats.receivedMessages, stats.sentMessagesSum, stats.receivedMessagesSum, stats.relayedMessages));
     }
